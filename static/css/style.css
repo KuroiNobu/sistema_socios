@@ -1,0 +1,138 @@
+:root {
+    --color-primary: #00ff84;
+    --color-secondary: #00cc6a;
+    --color-text: #e0e0e0;
+    --color-background: #111111;
+    --color-card-bg: #1c1f1d;
+    --color-hover: #2a332d;
+}
+body {
+    font-family: 'Open Sans', sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background-color: var(--color-background);
+    color: var(--color-text);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.navbar {
+    background-color: #0a0a0a;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    width: 100%;
+}
+
+
+.navbar-links {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+}
+
+.navbar-links a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.5s ease;
+}
+
+.navbar-links a:hover {
+    color: var(--color-primary);
+    
+}
+
+.hero {
+    text-align: center;
+    padding: 3rem 0;
+    background: linear-gradient(rgba(0, 255, 132, 0.05), rgba(0, 204, 106, 0.08));
+    margin-bottom: 2rem;
+    border-radius: 10px;
+}
+
+h1 {
+    color: var(--color-primary);
+    font-size: 2.5em;
+    margin-bottom: 30px;
+    border-bottom: 3px solid var(--color-secondary);
+    padding-bottom: 10px;
+}
+
+h2 {
+    color: var(--color-secondary);
+    font-size: 1.8em;
+}
+
+h3 {
+    color: var(--color-primary);
+    margin-top: 0.5rem;
+}
+
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin: 40px 0;
+}
+
+.feature-card {
+    background-color: var(--color-card-bg);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    background-color: var(--color-hover);
+}
+
+.feature-card i {
+    font-size: 2.5em;
+    color: var(--color-primary);
+    margin-bottom: 15px;
+}
+
+section {
+    background-color: var(--color-card-bg);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    margin: 20px 0;
+}
+
+section:hover {
+    background-color: var(--color-hover);
+}
+
+a {
+    color: var(--color-primary);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: var(--color-secondary);
+    text-decoration: underline;
+}
+@media (max-width: 768px) {
+    .navbar-links {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .feature-card {
+        margin-bottom: 20px;
+    }
+    
+    .container {
+        padding: 10px;
+    }
+}
