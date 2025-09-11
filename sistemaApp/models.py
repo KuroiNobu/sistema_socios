@@ -11,6 +11,9 @@ class Proveedores(models.Model):
     def __str__(self):
         return self.nombre
     
+    class Meta:
+        db_table ='proveedores'    
+    
 
 class Descuentos(models.Model):
     id_descuento = models.AutoField(primary_key=True)
@@ -22,6 +25,8 @@ class Descuentos(models.Model):
     def __str__(self):
         return f"Descuento {self.id_descuento} - {self.proveedor.nombre}"
 
+    class Meta:
+        db_table ='descuentos'    
 
 class Pagos(models.Model):
     id_pago = models.AutoField(primary_key=True)
@@ -31,6 +36,9 @@ class Pagos(models.Model):
 
     def __str__(self):
         return f"Pago {self.id_pago}"
+
+    class Meta:
+        db_table ='pagos'    
 
 class Socios(models.Model):
     id_socio = models.AutoField(primary_key=True)   
@@ -42,6 +50,9 @@ class Socios(models.Model):
     def __str__(self):
         return self.nombre
     
+    class Meta:
+        db_table ='socios'    
+
 class Cuotas(models.Model):
     id_cuota = models.AutoField(primary_key=True)
     id_pago = models.ForeignKey(Pagos, on_delete=models.CASCADE, null=True, blank=True)
@@ -52,6 +63,9 @@ class Cuotas(models.Model):
     def __str__(self):
         return f"Cuota {self.id_cuota} - Pago {self.id_pago.id_pago}"
 
+    class Meta:
+        db_table ='cuotas'    
+
 class Credenciales(models.Model):
     id_credencial = models.AutoField(primary_key=True)
     id_socio = models.OneToOneField(Socios, on_delete=models.CASCADE)
@@ -59,6 +73,9 @@ class Credenciales(models.Model):
 
     def __str__(self):
         return self.codigo_qr
+
+    class Meta:
+        db_table ='credenciales'    
 
 class Usuarios(models.Model):
     id_usuario = models.AutoField(primary_key=True)
@@ -71,3 +88,6 @@ class Usuarios(models.Model):
 
     def __str__(self):
         return self.nombre
+    
+    class Meta:
+        db_table ='usuarios'    
