@@ -67,7 +67,7 @@ class Usuarios(models.Model):
     run = models.CharField(max_length=12, unique=True)
     nombre = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    passwd = models.CharField(max_length=128)  # Almacenar contraseñas de forma segura
+    passwd = models.CharField(max_length=128)
 
     def __str__(self):
         return self.nombre
