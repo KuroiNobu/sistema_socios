@@ -4,6 +4,7 @@ from django.db import models
 
 class Proveedores(models.Model):
     id_proveedor = models.AutoField(primary_key=True)
+    id_usuario = models.ForeignKey('Usuarios', on_delete=models.CASCADE, null=True)
     nombre = models.CharField(max_length=100)
     fecha_descuento = models.DateField(null=True, blank=True)
     tipo_descuento = models.CharField(max_length=50, null=True, blank=True)
@@ -41,7 +42,8 @@ class Pagos(models.Model):
         db_table ='pagos'    
 
 class Socios(models.Model):
-    id_socio = models.AutoField(primary_key=True)   
+    id_socio = models.AutoField(primary_key=True)
+    id_usuario = models.ForeignKey('Usuarios', on_delete=models.CASCADE, null=True)
     nombre = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     telefono = models.CharField(max_length=15, blank=True, null=True)
@@ -79,8 +81,6 @@ class Credenciales(models.Model):
 
 class Usuarios(models.Model):
     id_usuario = models.AutoField(primary_key=True)
-    id_socio = models.OneToOneField(Socios, on_delete=models.CASCADE)
-    id_proveedor = models.ForeignKey(Proveedores, on_delete=models.CASCADE, null=True, blank=True)
     run = models.CharField(max_length=12, unique=True)
     nombre = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
