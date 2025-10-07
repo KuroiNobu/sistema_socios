@@ -67,7 +67,7 @@ class DescuentosForm(forms.ModelForm):
             'id_proveedor':forms.Select(attrs={'class':'form-select','placeholder':'Selecciona proveedor'}),
             'codigo_qr':forms.TextInput(attrs={'class':'form-control','placeholder':'Ingresa codigo QR'}),
             'descripcion':forms.Textarea(attrs={'class':'form-control','placeholder':'Ingresa descripcion','rows':3}),
-            'foto':forms.ImageField(attrs={'class':'form-control','placeholder':'Selecciona foto'}, widget=verLogo()),
+            'foto': verLogo(attrs={'class': 'form-control', 'placeholder': 'Selecciona foto'}),
         }
 
 class ProveedoresForm(forms.ModelForm):
