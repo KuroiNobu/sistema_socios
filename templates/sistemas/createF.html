@@ -1,0 +1,26 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block contenido %}
+{% if messages %}
+    {% for msj in messages  %}
+        <script>
+            Swal.fire('{{ msj }}','','success').then(()=>{
+                window.location.href = '{{ ruta }}'
+            })
+        </script>
+    {% endfor %}
+            
+{% endif %}
+    
+    <h1 class="alert alert-primary text-center mb-3">{{ titulo }}</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form }}
+        <div class="text-center mt-3">
+            <input type="reset" value="Limpiar" class="btn btn-outline-info">
+            <input type="submit" value="Guardar" class="btn btn-success">
+        </div>
+    </form>
+    <a href="{{ ruta }}" class="btn btn-outline-dark">Volver</a>
+{% endblock  %}
+    
