@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
-    {% load static %}
+{% load static %}
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Corporación</title>
+    <title>Corporación de Ecosistemas</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
 </head>
 <body>
     <nav class="navbar">
@@ -19,23 +20,24 @@
     </nav>
 
     <div class="container">
-        <div class="hero">
-            <h1>Socios Corporación de Ecosistemas</h1>
+        <div class="hero gradient-header">
+            <span class="badge-accent">Ecosistema</span>
+            <h2>Socios Corporación de Ecosistemas</h2>
             <p>Trabajando juntos por un futuro más verde y sostenible</p>
         </div>
 
-        <div class="features">
-            <div class="feature-card">
+        <div class="features colors-grid">
+            <div class="feature-card color-card">
                 <i class="fas fa-leaf"></i>
                 <h3>Sostenibilidad</h3>
                 <p>Promovemos prácticas sostenibles para proteger nuestro medio ambiente.</p>
             </div>
-            <div class="feature-card">
+            <div class="feature-card color-card">
                 <i class="fas fa-hands-helping"></i>
                 <h3>Comunidad</h3>
                 <p>Construimos una comunidad comprometida con el cambio positivo.</p>
             </div>
-            <div class="feature-card">
+            <div class="feature-card color-card">
                 <i class="fas fa-seedling"></i>
                 <h3>Educación</h3>
                 <p>Educamos sobre la importancia de la conservación ambiental.</p>
@@ -44,7 +46,7 @@
 
         <section>
             <h2>Información Adicional</h2>
-            <p>Para más información sobre la Corporación de Ecología, por favor visita nuestra <a href="#">página de información</a>.</p>
+            <p>Para más información sobre la Corporación de Ecosistemas, por favor visita nuestra <a href="#">página de información</a>.</p>
         </section>
     </div>
 </body>
