@@ -12,12 +12,17 @@
     <nav class="navbar">
         <div class="navbar-links">
             <a href="">Inicio</a>
-            <a href="{% url 'socios' %}">Registro</a>
+            <a href="{% url 'socios' %}">Socios</a>
             <a href="">Contacto</a>
             <a href="">Socios</a>
         </div>
     </nav>
 
+    
+    {% block contenido %}
+        
+    
+ 
     <div class="container">
         <div class="hero gradient-header">
             <span class="badge-accent">Ecosistema</span>
@@ -42,11 +47,13 @@
                 <p>Educamos sobre la importancia de la conservación ambiental.</p>
             </div>
         </div>
+    
 
         <section>
             <h2>Información Adicional</h2>
             <p>Para más información sobre la Corporación de Ecosistemas, por favor visita nuestra <a href="#">página de información</a>.</p>
         </section>
     </div>
+    {% endblock contenido %}
 </body>
 </html>
