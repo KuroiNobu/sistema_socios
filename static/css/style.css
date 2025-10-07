@@ -281,3 +281,104 @@ section a:hover {
         transform: translateY(0);
     }
 }
+
+/* Registro Styles */
+.registro-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(127, 215, 0, 0.1) 0%, rgba(0, 188, 212, 0.1) 100%);
+}
+
+.registro-card {
+    background: var(--blanco);
+    padding: 2.5rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 500px;
+    border-top: 4px solid var(--verde-lima);
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.registro-titulo {
+    color: var(--gris-oscuro);
+    font-size: 2em;
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--verde-lima);
+}
+
+.registro-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    color: var(--gris-oscuro);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.form-group input {
+    padding: 0.8rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--turquesa-cyan);
+    box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.1);
+}
+
+.registro-button {
+    background: linear-gradient(90deg, var(--verde-lima) 0%, var(--verde-botones) 100%);
+    color: var(--blanco);
+    padding: 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.registro-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(139, 195, 74, 0.4);
+}
+
+.registro-button:active {
+    transform: translateY(0);
+}
+
+/* Responsive para el registro */
+@media (max-width: 768px) {
+    .registro-card {
+        padding: 1.5rem;
+    }
+
+    .registro-titulo {
+        font-size: 1.5em;
+    }
+
+    .form-group input {
+        padding: 0.6rem;
+    }
+}
