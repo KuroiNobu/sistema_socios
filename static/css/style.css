@@ -4,6 +4,11 @@
     box-sizing: border-box;
 }
 
+.card-link {
+    text-decoration: none;
+    color: inherit;
+}
+
 :root {
     --verde-lima: #7FD700;
     --turquesa-cyan: #00BCD4;

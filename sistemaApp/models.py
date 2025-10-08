@@ -6,6 +6,7 @@ class Proveedores(models.Model):
     id_proveedor = models.AutoField(primary_key=True)
     id_usuario = models.ForeignKey('Usuarios', on_delete=models.CASCADE, null=True)
     nombre = models.CharField(max_length=100)
+    apellido = models.CharField(max_length=100)
     fecha_descuento = models.DateField(null=True, blank=True)
     tipo_descuento = models.CharField(max_length=50, null=True, blank=True)
 
@@ -15,7 +16,6 @@ class Proveedores(models.Model):
     class Meta:
         db_table ='proveedores'    
     
-
 class Descuentos(models.Model):
     id_descuento = models.AutoField(primary_key=True)
     proveedor = models.ForeignKey(Proveedores, to_field='id_proveedor', on_delete=models.CASCADE)
@@ -45,6 +45,7 @@ class Socios(models.Model):
     id_socio = models.AutoField(primary_key=True)
     id_usuario = models.ForeignKey('Usuarios', on_delete=models.CASCADE, null=True)
     nombre = models.CharField(max_length=100)
+    apellido = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     telefono = models.CharField(max_length=15, blank=True, null=True)
     fecha_registro = models.DateField(auto_now_add=True)

@@ -11,10 +11,10 @@
 <body>
     <nav class="navbar">
         <div class="navbar-links">
-            <a href="">Inicio</a>
-            <a href="{% url 'socios' %}">Socios</a>
-            <a href="">Contacto</a>
+            <a href="{% url 'inicio' %}">Inicio</a>
+            <a href="{% url 'usuarios' %}">Usuarios</a>
             <a href="">Socios</a>
+            <a href="{% url 'proveedores' %}">Proveedores</a>
         </div>
     </nav>
 
@@ -22,20 +22,20 @@
     {% block contenido %}
         
     
- 
     <div class="container">
         <div class="hero gradient-header">
             <span class="badge-accent">Ecosistema</span>
             <h2>Socios Corporación de Ecosistemas</h2>
             <p>Trabajando juntos por un futuro más verde y sostenible</p>
         </div>
-
-        <div class="features colors-grid">
-            <div class="feature-card color-card">
-                <i class="fas fa-leaf"></i>
-                <h3>Sostenibilidad</h3>
-                <p>Promovemos prácticas sostenibles para proteger nuestro medio ambiente.</p>
-            </div>
+        <div class="features colors-grid card-link">
+            <a href="{% url 'socios' %}" >
+                <div class="feature-card color-card">
+                    <i class="fas fa-users"></i>
+                    <h3>Socios</h3>
+                    <p>Gestiona y visualiza los socios de la corporación.</p>
+                </div>
+            </a>
             <div class="feature-card color-card">
                 <i class="fas fa-hands-helping"></i>
                 <h3>Comunidad</h3>
