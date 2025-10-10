@@ -5,7 +5,8 @@
     <div class="registro-container">
         <div class="registro-card">
             <h1 class="registro-titulo">Registro Socio</h1>
-            <form class="registro-form" action="">
+            <form id="crear-socio-form" class="registro-form" method="post">
+                {% csrf_token %}
                 <div class="form-group">
                     <label for="nombre">Nombre</label>
                     <input type="text" id="name" name="name" required>

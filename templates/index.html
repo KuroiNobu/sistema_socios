@@ -13,15 +13,15 @@
         <div class="navbar-links">
             <a href="{% url 'inicio' %}">Inicio</a>
             <a href="{% url 'usuarios' %}">Usuarios</a>
-            <a href="">Socios</a>
+            <a href="{% url 'socios' %}">Socios</a>
             <a href="{% url 'proveedores' %}">Proveedores</a>
+            <a href="{% url 'credenciales' %}">Credenciales</a>
+            <a href="{% url 'descuentos' %}">Descuentos</a>
         </div>
     </nav>
 
-    
     {% block contenido %}
         
-    
     <div class="container">
         <div class="hero gradient-header">
             <span class="badge-accent">Ecosistema</span>

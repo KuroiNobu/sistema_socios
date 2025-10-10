@@ -4,6 +4,7 @@ from django.core.files.storage import FileSystemStorage
 from sistemaApp.models import Proveedores, Descuentos, Usuarios, Credenciales, Socios, Pagos, Cuotas
 from sistemaApp.forms import ProveedoresForm, DescuentosForm, UsuariosForm, CredencialesForm, SociosForm, PagosForm, CuotasForm
 
+
 # Create your views here.
 def inicio(request):
     return render(request, 'index.html')
@@ -289,3 +290,119 @@ def eliminarCuotas(request,id):
     cuota = Cuotas.objects.get(pk=id)
     cuota.delete()
     return redirect('/sistemas/cuotas')
+
+
+
+import qrcode
+import io
+import base64
+import json
+from datetime import datetime
+
+
+
+def credenciales(request):
+    """
+    Muestra la lista de Credenciales y genera (en memoria) un QR por cada registro.
+    No utiliza POST para generar QR: cada usuario tiene su QR mostrado en la lista.
+    """
+    qs = Credenciales.objects.all()
+    cred_list = []
+
+    for c in qs:
+
+        payload = {
+            "type": "credentials",
+            "id": c.pk,
+            "user": getattr(c, "usuario", ""),
+            "note": getattr(c, "descripcion", "")
+        }
+        payload_json = json.dumps(payload, ensure_ascii=False)
+
+        qr = qrcode.QRCode(box_size=6, border=2)
+        qr.add_data(payload_json)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        b64 = base64.b64encode(buf.getvalue()).decode()
+        qr_img = f"data:image/png;base64,{b64}"
+
+        cred_list.append({
+            "obj": c,
+            "qr_img": qr_img,
+            "payload_json": payload_json
+        })
+
+    context = {
+        "titulo": "Lista de Credenciales",
+        "cred_list": cred_list
+    }
+    return render(request, "sistemas/credenciales.html", context)
+
+
+def descuentos_qr(request):
+    """
+    Lista descuentos y genera (en memoria) un QR asociado a cada registro.
+    También permite generar un QR ad-hoc vía POST con campos: code, percent, expires.
+    """
+    qs = Descuentos.objects.all()
+    desc_list = []
+
+    for d in qs:
+        payload = {
+            "type": "discount",
+            "id": d.pk,
+            "code": getattr(d, "codigo", ""),
+            "percent": getattr(d, "porcentaje", ""),
+            "expires": str(getattr(d, "vigencia", ""))  # ajustar según campo
+        }
+        payload_json = json.dumps(payload, ensure_ascii=False)
+
+        qr = qrcode.QRCode(box_size=6, border=2)
+        qr.add_data(payload_json)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        b64 = base64.b64encode(buf.getvalue()).decode()
+        qr_img = f"data:image/png;base64,{b64}"
+
+        desc_list.append({
+            "obj": d,
+            "qr_img": qr_img,
+            "payload_json": payload_json
+        })
+
+    # soporte para generar QR ad-hoc desde formulario
+    qr_img_custom = None
+    payload_custom = None
+    if request.method == "POST":
+        code = request.POST.get("code", "").strip()
+        percent = request.POST.get("percent", "").strip()
+        expires = request.POST.get("expires", "").strip()
+        payload_custom = {
+            "type": "discount",
+            "code": code,
+            "percent": percent,
+            "expires": expires
+        }
+        payload_json = json.dumps(payload_custom, ensure_ascii=False)
+        qr = qrcode.QRCode(box_size=8, border=4)
+        qr.add_data(payload_json)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        b64 = base64.b64encode(buf.getvalue()).decode()
+        qr_img_custom = f"data:image/png;base64,{b64}"
+
+    context = {
+        "titulo": "Descuentos - QR",
+        "desc_list": desc_list,
+        "qr_img_custom": qr_img_custom,
+        "payload_custom": json.dumps(payload_custom, ensure_ascii=False) if payload_custom else None
+    }
+    return render(request, "sistemas/descuentos_qr.html", context)
