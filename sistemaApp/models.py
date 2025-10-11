@@ -6,7 +6,7 @@ class Proveedores(models.Model):
     id_proveedor = models.AutoField(primary_key=True)
     id_usuario = models.ForeignKey('Usuarios', on_delete=models.CASCADE, null=True)
     nombre = models.CharField(max_length=100)
-    apellido = models.CharField(max_length=100)
+    apellido = models.CharField(max_length=100, null=True, blank=True)
     fecha_descuento = models.DateField(null=True, blank=True)
     tipo_descuento = models.CharField(max_length=50, null=True, blank=True)
 
@@ -45,7 +45,7 @@ class Socios(models.Model):
     id_socio = models.AutoField(primary_key=True)
     id_usuario = models.ForeignKey('Usuarios', on_delete=models.CASCADE, null=True)
     nombre = models.CharField(max_length=100)
-    apellido = models.CharField(max_length=100)
+    apellido = models.CharField(max_length=100, null=True, blank=True)
     email = models.EmailField(unique=True)
     telefono = models.CharField(max_length=15, blank=True, null=True)
     fecha_registro = models.DateField(auto_now_add=True)

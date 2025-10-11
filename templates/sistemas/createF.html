@@ -9,18 +9,30 @@
             })
         </script>
     {% endfor %}
-            
 {% endif %}
-    
-    <h1 class="alert alert-primary text-center mb-3">{{ titulo }}</h1>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form }}
-        <div class="text-center mt-3">
-            <input type="reset" value="Limpiar" class="btn btn-outline-info">
-            <input type="submit" value="Guardar" class="btn btn-success">
+
+<div class="registro-container">
+    <form method="post" class="registro-card" enctype="multipart/form-data">
+        <h1 class="registro-titulo">{{ titulo }}</h1>
+        <div class="registro-form">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <span style="color: #e74c3c; font-size: 0.85rem; margin-top: 0.25rem;">
+                            {{ field.errors.0 }}
+                        </span>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            <input type="reset" value="Limpiar" class="registro-button">
+            <input type="submit" value="Guardar" class="registro-button">
         </div>
     </form>
-    <a href="{{ ruta }}" class="btn btn-outline-dark">Volver</a>
-{% endblock  %}
-    
+</div>
+
+{% endblock %}

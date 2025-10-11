@@ -106,9 +106,12 @@ def crearUsuarios(request):
     if request.method == 'POST':
         form = UsuariosForm(request.POST,request.FILES)
         if form.is_valid():
-            FileSystemStorage(location='media/usuarios/')
             form.save()
             messages.success(request,'Usuario creado con éxito.')
+            return redirect('usuarios')
+        else:
+            # Si hay errores, mantener los datos del formulario
+            data['form'] = form
     return render(request,'sistemas/createF.html',data)
 
 def editarUsuarios(request,id):
@@ -186,9 +189,12 @@ def crearSocios(request):
     if request.method == 'POST':
         form = SociosForm(request.POST,request.FILES)
         if form.is_valid():
-            FileSystemStorage(location='media/socios/')
             form.save()
             messages.success(request,'Socio creado con éxito.')
+            return redirect('socios')
+        else:
+            # Si hay errores, mantener los datos del formulario
+            data['form'] = form
     return render(request,'sistemas/createF.html',data)
 
 def editarSocios(request,id):

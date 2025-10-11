@@ -14,12 +14,19 @@ class UsuariosForm(forms.ModelForm):
     class Meta:
         model = Usuarios
         fields = '__all__'
+        labels = {
+            'id_usuario': 'ID Usuario',
+            'run': 'Run',
+            'nombre': 'Nombre',
+            'email': 'Email',
+            'passwd': 'Contraseña',
+        }
         widgets = {
             'id_usuario':forms.TextInput(attrs={'class':'form-control','placeholder':'Ingresa ID usuario'}),
             'run':forms.TextInput(attrs={'class':'form-control','placeholder':'Ingresa Run'}),
             'nombre':forms.TextInput(attrs={'class':'form-control','placeholder':'Ingresa nombre'}),
             'email':forms.EmailInput(attrs={'class':'form-control','placeholder':'Ingresa email'}),
-            'password':forms.PasswordInput(attrs={'class':'form-control','placeholder':'Ingresa password'}),
+            'passwd':forms.PasswordInput(attrs={'class':'form-control','placeholder':'Ingresa contraseña'}),
         }
 
 class SociosForm(forms.ModelForm):

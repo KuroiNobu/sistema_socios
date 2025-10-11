@@ -2,13 +2,14 @@
 {% load static %}
 
 
+
 {% block contenido %}
 <div class="registro-container">
     <div class="registro-card">
         <h1 class="registro-titulo">{{ titulo }}</h1>
         <div>
-            <a href="{% url 'crearproveedores' %}">Crear</a>
-        </div>div>
+            <a href="{% url 'crearproveedores' %}">Crear Proveedor</a>
+        </div>
         <form class="registro-form">
             <div class="form-group">
                 <label for="nombre">Nombre</label>
@@ -32,3 +33,4 @@
 </div>
 
 {% endblock contenido %}
+
