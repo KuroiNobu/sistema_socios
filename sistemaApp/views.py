@@ -235,6 +235,7 @@ def crearPagos(request):
             FileSystemStorage(location='media/pagos/')
             form.save()
             messages.success(request,'Pago creado con éxito.')
+            return redirect('/sistemas/pagos')
     return render(request,'sistemas/createF.html',data)
 
 def editarPagos(request,id):    
@@ -250,6 +251,7 @@ def editarPagos(request,id):
         if form.is_valid():
             form.save()
             messages.success(request,'Pago editado con éxito.')
+            return redirect('/sistemas/pagos')
     return render(request,'sistemas/createF.html',data)
 
 def eliminarPagos(request,id):
@@ -275,6 +277,7 @@ def crearCuotas(request):
             FileSystemStorage(location='media/cuotas/')
             form.save()
             messages.success(request,'Cuota creada con éxito.')
+            return redirect('/sistemas/cuotas')
     return render(request,'sistemas/createF.html',data)
 
 def editarCuotas(request,id):
@@ -290,6 +293,7 @@ def editarCuotas(request,id):
         if form.is_valid():
             form.save()
             messages.success(request,'Cuota editada con éxito.')
+            return redirect('/sistemas/cuotas')
     return render(request,'sistemas/createF.html',data)
 
 def eliminarCuotas(request,id):
