@@ -1,4 +1,4 @@
-'<!DOCTYPE html>
+<!DOCTYPE html>
 {% load static %}
 <html lang="es">
 <head>
@@ -10,15 +10,18 @@
 </head>
 <body>
     <nav class="navbar">
-        <div class="navbar-links">
-            <a href="{% url 'inicio' %}">Inicio</a>
-            <a href="{% url 'crearusuarios' %}">Usuarios</a>
-            <a href="{% url 'crearsocios' %}">Socios</a>
-            <a href="{% url 'crearproveedores' %}">Registro Proveedor</a>
-            <a href="{% url 'credenciales' %}">Credenciales</a>
-            <a href="{% url 'descuentos' %}">Descuentos</a>
-            <a href="{% url 'pagos' %}"> Pagos</a>
-            <a href="{% url 'cuotas' %}"> Cuotas</a>
+        <div class="navbar-inner">
+            <span class="navbar-brand">Personas que conectan</span>
+            <div class="navbar-links">
+                <a href="{% url 'inicio' %}">Inicio</a>
+                {% if request.session.user_id %}
+                    <a href="{% url 'panel' %}">Panel</a>
+                    <a href="{% url 'logout' %}" class="logout-link">Cerrar sesión</a>
+                {% else %}
+                    <a href="{% url 'login' %}">Iniciar sesión</a>
+                    <a href="{% url 'registro' %}" class="registro-link">Registrarse</a>
+                {% endif %}
+            </div>
         </div>
     </nav>
 
@@ -31,7 +34,7 @@
             <p>Trabajando juntos por un futuro más verde y sostenible</p>
         </div>
         <div class="features colors-grid card-link">
-            <a href="{% url 'crearsocios' %}" >
+            <a href="{% if request.session.user_id %}{% url 'panel' %}{% else %}{% url 'login' %}{% endif %}">
                 <div class="feature-card color-card">
                     <i class="fas fa-users"></i>
                     <h3>Socios</h3>

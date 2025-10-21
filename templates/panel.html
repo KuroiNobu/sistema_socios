@@ -1,0 +1,70 @@
+{% extends 'index.html' %}
+{% load static %}
+
+{% block contenido %}
+<div class="dashboard-wrapper">
+    <header class="dashboard-header">
+        <div class="dashboard-title">
+            <h1>Personas que conectan</h1>
+            <p>Bienvenido {{ usuario }}. Selecciona la sección que deseas administrar.</p>
+        </div>
+        <div class="dashboard-user">
+            <span class="role-badge">
+                <i class="fas {% if user_type == 'admin' %}fa-user-shield{% else %}fa-user{% endif %}"></i>
+                {% if user_type == 'admin' %}Administrador{% else %}Usuario{% endif %}
+            </span>
+            <a href="{% url 'logout' %}" class="dashboard-logout">Cerrar sesión</a>
+        </div>
+    </header>
+
+    <div class="dashboard-body">
+        <aside class="dashboard-sidebar">
+            <ul class="sidebar-menu">
+                {% for accion in acciones %}
+                    <li>
+                        {% if accion.secondary_url %}
+                            <a href="{% url accion.secondary_url %}">{{ accion.title }}</a>
+                        {% elif accion.primary_url %}
+                            <a href="{% url accion.primary_url %}">{{ accion.title }}</a>
+                        {% else %}
+                            <span>{{ accion.title }}</span>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </aside>
+
+        <section class="dashboard-content">
+            {% if messages %}
+                <div class="dashboard-messages">
+                    {% for message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="dashboard-cards">
+                {% for accion in acciones %}
+                    <div class="dashboard-card">
+                        <div class="card-icon">
+                            <i class="{{ accion.icon }}"></i>
+                        </div>
+                        <div class="card-info">
+                            <h3>{{ accion.title }}</h3>
+                            <p>{{ accion.description }}</p>
+                        </div>
+                        <div class="card-actions">
+                            {% if accion.primary_url %}
+                                <a href="{% url accion.primary_url %}" class="registro-button">{{ accion.primary_label }}</a>
+                            {% endif %}
+                            {% if accion.secondary_url %}
+                                <a href="{% url accion.secondary_url %}" class="card-link">{{ accion.secondary_label }}</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock contenido %}

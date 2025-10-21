@@ -1,19 +1,230 @@
+from functools import wraps
+
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.core.files.storage import FileSystemStorage
+
 from sistemaApp.models import Proveedores, Descuentos, Usuarios, Credenciales, Socios, Pagos, Cuotas
-from sistemaApp.forms import ProveedoresForm, DescuentosForm, UsuariosForm, CredencialesForm, SociosForm, PagosForm, CuotasForm
+from sistemaApp.forms import (
+    ProveedoresForm,
+    DescuentosForm,
+    UsuariosForm,
+    CredencialesForm,
+    SociosForm,
+    PagosForm,
+    CuotasForm,
+    LoginForm,
+    RegistroUsuarioForm,
+    SocioPerfilForm,
+)
+
+
+def login_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.session.get('user_id'):
+            messages.info(request, 'Inicia sesión para continuar.')
+            return redirect('login')
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
+
+
+def admin_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.session.get('user_id'):
+            messages.info(request, 'Inicia sesión para continuar.')
+            return redirect('login')
+        if request.session.get('user_type') != Usuarios.ADMIN:
+            messages.warning(request, 'No tienes permisos para acceder a esta sección.')
+            return redirect('panel')
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
+
+
+ADMIN_ACTIONS = [
+    {
+        'title': 'Usuarios',
+        'description': 'Crea y administra los usuarios autorizados.',
+        'icon': 'fas fa-user-shield',
+        'primary_url': 'crearusuarios',
+        'primary_label': 'Registrar usuario',
+        'secondary_url': 'usuarios',
+        'secondary_label': 'Ver usuarios',
+    },
+    {
+        'title': 'Socios',
+        'description': 'Gestiona la información de los socios registrados.',
+        'icon': 'fas fa-users',
+        'primary_url': 'crearsocios',
+        'primary_label': 'Registrar socio',
+        'secondary_url': 'socios',
+        'secondary_label': 'Ver socios',
+    },
+    {
+        'title': 'Proveedores',
+        'description': 'Administra los datos y convenios de proveedores.',
+        'icon': 'fas fa-store',
+        'primary_url': 'crearproveedores',
+        'primary_label': 'Registrar proveedor',
+        'secondary_url': 'proveedores',
+        'secondary_label': 'Ver proveedores',
+    },
+    {
+        'title': 'Descuentos',
+        'description': 'Mantén los descuentos disponibles para los socios.',
+        'icon': 'fas fa-gift',
+        'primary_url': 'creardescuentos',
+        'primary_label': 'Registrar descuento',
+        'secondary_url': 'descuentos',
+        'secondary_label': 'Ver descuentos',
+    },
+    {
+        'title': 'Pagos',
+        'description': 'Registra y revisa los pagos recibidos.',
+        'icon': 'fas fa-money-bill-wave',
+        'primary_url': 'crearpagos',
+        'primary_label': 'Registrar pago',
+        'secondary_url': 'pagos',
+        'secondary_label': 'Ver pagos',
+    },
+    {
+        'title': 'Cuotas',
+        'description': 'Controla las cuotas programadas y su estado.',
+        'icon': 'fas fa-calendar-check',
+        'primary_url': 'crearcuotas',
+        'primary_label': 'Registrar cuota',
+        'secondary_url': 'cuotas',
+        'secondary_label': 'Ver cuotas',
+    },
+    {
+        'title': 'Credenciales',
+        'description': 'Genera credenciales con código QR para socios.',
+        'icon': 'fas fa-id-card',
+        'primary_url': 'crearcredenciales',
+        'primary_label': 'Registrar credencial',
+        'secondary_url': 'credenciales',
+        'secondary_label': 'Ver credenciales',
+    },
+]
+
+
+USER_ACTIONS = [
+    {
+        'title': 'Perfil de socio',
+        'description': 'Completa o actualiza tus datos para convertirte en socio.',
+        'icon': 'fas fa-id-badge',
+        'primary_url': 'perfil_socio',
+        'primary_label': 'Gestionar mi perfil',
+        'secondary_url': None,
+        'secondary_label': None,
+    },
+]
 
 
 # Create your views here.
+def login_view(request):
+    if request.session.get('user_id'):
+        return redirect('panel')
+
+    form = LoginForm(request.POST or None)
+
+    if request.method == 'POST' and form.is_valid():
+        email = form.cleaned_data['email']
+        password = form.cleaned_data['password']
+
+        try:
+            usuario = Usuarios.objects.get(email=email)
+        except Usuarios.DoesNotExist:
+            messages.error(request, 'No encontramos una cuenta con el correo proporcionado.')
+        else:
+            if usuario.passwd != password:
+                messages.error(request, 'La contraseña ingresada no es correcta.')
+            else:
+                request.session.flush()
+                request.session['user_id'] = usuario.id_usuario
+                request.session['user_name'] = usuario.nombre
+                request.session['user_email'] = usuario.email
+                request.session['user_type'] = usuario.tipo_usuario
+                messages.success(request, f'Bienvenido {usuario.nombre}.')
+                return redirect('panel')
+
+    return render(request, 'login.html', {'form': form})
+
+
+def logout_view(request):
+    request.session.flush()
+    messages.info(request, 'Sesión cerrada correctamente.')
+    return redirect('login')
+
+
+def registro_view(request):
+    if request.session.get('user_id'):
+        return redirect('panel')
+
+    form = RegistroUsuarioForm(request.POST or None)
+
+    if request.method == 'POST' and form.is_valid():
+        usuario = form.save()
+        request.session.flush()
+        request.session['user_id'] = usuario.id_usuario
+        request.session['user_name'] = usuario.nombre
+        request.session['user_email'] = usuario.email
+        request.session['user_type'] = usuario.tipo_usuario
+        messages.success(request, 'Cuenta creada con éxito. ¡Bienvenido!')
+        return redirect('panel')
+
+    return render(request, 'registro.html', {'form': form})
+
+
+@login_required
+def panel(request):
+    user_type = request.session.get('user_type', Usuarios.ADMIN)
+    acciones = ADMIN_ACTIONS if user_type == Usuarios.ADMIN else USER_ACTIONS
+    context = {
+        'acciones': acciones,
+        'titulo': 'Panel principal',
+        'usuario': request.session.get('user_name', ''),
+        'user_type': user_type,
+    }
+    return render(request, 'panel.html', context)
+
+
 def inicio(request):
     return render(request, 'index.html')
 
+
+@login_required
+def perfil_socio(request):
+    if request.session.get('user_type') != Usuarios.NORMAL:
+        messages.info(request, 'Esta sección es solo para usuarios estándar.')
+        return redirect('panel')
+
+    usuario = Usuarios.objects.get(pk=request.session['user_id'])
+    socio = Socios.objects.filter(id_usuario=usuario).first()
+    form = SocioPerfilForm(request.POST or None, instance=socio)
+
+    if request.method == 'POST' and form.is_valid():
+        form.save(usuario)
+        messages.success(request, 'Tu información de socio se guardó correctamente.')
+        return redirect('panel')
+
+    context = {
+        'form': form,
+        'titulo': 'Mi perfil de socio',
+        'tiene_registro': socio is not None,
+    }
+    return render(request, 'perfil_socio.html', context)
+
+@admin_required
 def proveedores(request):
     proveedores = Proveedores.objects.all()
     data =  {'titulo': 'Lista de Proveedores', 'proveedores': proveedores}
     return render(request, 'sistemas/proveedores.html', data)
 
+@admin_required
 def crearProveedores(request):
     form = ProveedoresForm()
     data = {
@@ -29,6 +240,7 @@ def crearProveedores(request):
             messages.success(request,'Proveedor creado con éxito.')
     return render(request,'sistemas/createF.html',data)
 
+@admin_required
 def editarProveedor(request,id):
     prov = Proveedores.objects.get(pk=id)
     form = ProveedoresForm(instance=prov)
@@ -44,17 +256,20 @@ def editarProveedor(request,id):
             messages.success(request,'Proveedor editado con éxito.')
     return render(request,'sistemas/createF.html',data)
 
+@admin_required
 def eliminarProveedor(request,id):
     prov = Proveedores.objects.get(pk=id)
     prov.delete()
     return redirect('/sistemas/proveedores')
 
 
+@admin_required
 def descuentos(request):
     descuentos = Descuentos.objects.all()
     data =  {'titulo': 'Lista de Descuentos', 'descuentos': descuentos}
     return render(request, 'sistemas/descuentos.html', data)
 
+@admin_required
 def crearDescuentos(request):
     form = DescuentosForm()
     data = {
@@ -70,6 +285,7 @@ def crearDescuentos(request):
             messages.success(request,'Descuento creado con éxito.')
     return render(request,'sistemas/createF.html',data)
 
+@admin_required
 def editarDescuentos(request,id):
     desc = Descuentos.objects.get(pk=id)
     form = DescuentosForm(instance=desc)
@@ -85,17 +301,20 @@ def editarDescuentos(request,id):
             messages.success(request,'Descuento editado con éxito.')
     return render(request,'sistemas/createF.html',data)
 
+@admin_required
 def eliminarDescuentos(request,id):
     desc = Descuentos.objects.get(pk=id)
     desc.delete()
     return redirect('/sistemas/descuentos')
 
 
+@admin_required
 def usuarios(request):
     usuarios = Usuarios.objects.all()
     data =  {'titulo': 'Lista de Usuarios', 'usuarios': usuarios}
     return render(request, 'sistemas/usuarios.html', data)
 
+@admin_required
 def crearUsuarios(request):
     form = UsuariosForm()
     data = {
@@ -114,6 +333,7 @@ def crearUsuarios(request):
             data['form'] = form
     return render(request,'sistemas/createF.html',data)
 
+@admin_required
 def editarUsuarios(request,id):
     user = Usuarios.objects.get(pk=id)
     form = UsuariosForm(instance=user)
@@ -129,16 +349,13 @@ def editarUsuarios(request,id):
             messages.success(request,'Usuario editado con éxito.')
     return render(request,'sistemas/createF.html',data)
 
+@admin_required
 def eliminarUsuarios(request,id):
     user = Usuarios.objects.get(pk=id)
     user.delete()
     return redirect('/sistemas/usuarios')
 
-def credenciales(request):
-    credenciales = Credenciales.objects.all()
-    data =  {'titulo': 'Lista de Credenciales', 'credenciales': credenciales}
-    return render(request, 'sistemas/credenciales.html', data)
-
+@admin_required
 def crearCredenciales(request):
     form = CredencialesForm()
     data = {
@@ -154,6 +371,7 @@ def crearCredenciales(request):
             messages.success(request,'Credencial creada con éxito.')
     return render(request,'sistemas/createF.html',data)
 
+@admin_required
 def editarCredenciales(request,id):
     cred = Credenciales.objects.get(pk=id)
     form = CredencialesForm(instance=cred)
@@ -169,16 +387,19 @@ def editarCredenciales(request,id):
             messages.success(request,'Credencial editada con éxito.')
     return render(request,'sistemas/createF.html',data)
 
+@admin_required
 def eliminarCredenciales(request,id):
     cred = Credenciales.objects.get(pk=id)
     cred.delete()
     return redirect('/sistemas/credenciales')
 
+@admin_required
 def socios(request):
     socios = Socios.objects.all()
     data =  {'titulo': 'Lista de Socios', 'socios': socios}
     return render(request, 'sistemas/socios.html', data)
 
+@admin_required
 def crearSocios(request):
     form = SociosForm()
     data = {
@@ -197,6 +418,7 @@ def crearSocios(request):
             data['form'] = form
     return render(request,'sistemas/createF.html',data)
 
+@admin_required
 def editarSocios(request,id):
     socio = Socios.objects.get(pk=id)
     form = SociosForm(instance=socio)
@@ -212,16 +434,19 @@ def editarSocios(request,id):
             messages.success(request,'Socio editado con éxito.')
     return render(request,'sistemas/createF.html',data)
 
+@admin_required
 def eliminarSocios(request,id):
     socio = Socios.objects.get(pk=id)
     socio.delete()
     return redirect('/sistemas/socios')
 
+@admin_required
 def pagos(request):
     pagos = Pagos.objects.all()
     data =  {'titulo': 'Lista de Pagos', 'pagos': pagos}
     return render(request, 'sistemas/pagos.html', data)
 
+@admin_required
 def crearPagos(request):
     form = PagosForm()
     data = {
@@ -238,6 +463,7 @@ def crearPagos(request):
             return redirect('/sistemas/pagos')
     return render(request,'sistemas/createF.html',data)
 
+@admin_required
 def editarPagos(request,id):    
     pago = Pagos.objects.get(pk=id)
     form = PagosForm(instance=pago)
@@ -254,16 +480,19 @@ def editarPagos(request,id):
             return redirect('/sistemas/pagos')
     return render(request,'sistemas/createF.html',data)
 
+@admin_required
 def eliminarPagos(request,id):
     pago = Pagos.objects.get(pk=id)
     pago.delete()
     return redirect('/sistemas/pagos')
 
+@admin_required
 def cuotas(request):
     cuotas = Cuotas.objects.all()
     data =  {'titulo': 'Lista de Cuotas', 'cuotas': cuotas}
     return render(request, 'sistemas/cuotas.html', data)
 
+@admin_required
 def crearCuotas(request):
     form = CuotasForm()
     data = {
@@ -280,6 +509,7 @@ def crearCuotas(request):
             return redirect('/sistemas/cuotas')
     return render(request,'sistemas/createF.html',data)
 
+@admin_required
 def editarCuotas(request,id):
     cuota = Cuotas.objects.get(pk=id)
     form = CuotasForm(instance=cuota)
@@ -296,6 +526,7 @@ def editarCuotas(request,id):
             return redirect('/sistemas/cuotas')
     return render(request,'sistemas/createF.html',data)
 
+@admin_required
 def eliminarCuotas(request,id):
     cuota = Cuotas.objects.get(pk=id)
     cuota.delete()
@@ -311,6 +542,7 @@ from datetime import datetime
 
 
 
+@admin_required
 def credenciales(request):
     """
     Muestra la lista de Credenciales y genera (en memoria) un QR por cada registro.
@@ -352,6 +584,7 @@ def credenciales(request):
     return render(request, "sistemas/credenciales.html", context)
 
 
+@admin_required
 def descuentos_qr(request):
     """
     Lista descuentos y genera (en memoria) un QR asociado a cada registro.

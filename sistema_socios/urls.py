@@ -16,12 +16,16 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from sistemaApp.views import inicio
+from sistemaApp.views import inicio, login_view, logout_view, panel, registro_view
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',inicio,name='inicio'),
+    path('login/', login_view, name='login'),
+    path('registro/', registro_view, name='registro'),
+    path('logout/', logout_view, name='logout'),
+    path('panel/', panel, name='panel'),
     path('sistemas/',include('sistemaApp.urls'))
 ] + static (settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)

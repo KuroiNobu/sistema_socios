@@ -81,11 +81,19 @@ class Credenciales(models.Model):
         db_table ='credenciales'    
 
 class Usuarios(models.Model):
+    ADMIN = 'admin'
+    NORMAL = 'normal'
+    TIPO_USUARIO_CHOICES = [
+        (ADMIN, 'Administrador'),
+        (NORMAL, 'Usuario'),
+    ]
+
     id_usuario = models.AutoField(primary_key=True)
     run = models.CharField(max_length=12, unique=True)
     nombre = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     passwd = models.CharField(max_length=128)
+    tipo_usuario = models.CharField(max_length=10, choices=TIPO_USUARIO_CHOICES, default=ADMIN)
 
     def __str__(self):
         return self.nombre

@@ -1,0 +1,36 @@
+{% extends 'index.html' %}
+{% load static %}
+
+{% block contenido %}
+<div class="registro-container">
+    <div class="registro-card">
+        <h1 class="registro-titulo">Crear una cuenta</h1>
+
+        {% if messages %}
+            <div class="form-group">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" class="registro-form">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <small style="color: #e74c3c;">{{ field.errors|striptags }}</small>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="registro-button">
+                <i class="fas fa-user-plus"></i>
+                Registrarme
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock contenido %}
