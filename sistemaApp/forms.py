@@ -68,6 +68,12 @@ class UsuariosForm(forms.ModelForm):
         }
 
 class SociosForm(forms.ModelForm):
+    passwd = forms.CharField(
+        label='Contraseña',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa contraseña'}),
+        required=False,
+    )
+
     class Meta:
         model = Socios
         fields = '__all__'
@@ -79,6 +85,14 @@ class SociosForm(forms.ModelForm):
             'telefono':forms.TextInput(attrs={'class':'form-control','placeholder':'Ingresa telefono'}),
             'fecha_registro':forms.DateInput(attrs={'class':'form-control','type':'date'}),
         }
+
+    def clean_passwd(self):
+        password = self.cleaned_data.get('passwd', '')
+        if not password:
+            if self.instance.pk and self.instance.passwd:
+                return self.instance.passwd
+            raise forms.ValidationError('Ingresa una contraseña.')
+        return password
 
 class PagosForm(forms.ModelForm):
     class Meta:
@@ -116,6 +130,12 @@ class DescuentosForm(forms.ModelForm):
         }
 
 class ProveedoresForm(forms.ModelForm):
+    passwd = forms.CharField(
+        label='Contraseña',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa contraseña'}),
+        required=False,
+    )
+
     class Meta:
         model = Proveedores
         fields = '__all__'
@@ -123,9 +143,24 @@ class ProveedoresForm(forms.ModelForm):
             'id_proveedor':forms.TextInput(attrs={'class':'form-control','placeholder':'Ingresa ID proveedor'}),
             'id_usuario':forms.Select(attrs={'class':'form-select','placeholder':'Selecciona usuario'}),
             'nombre':forms.TextInput(attrs={'class':'form-control','placeholder':'Ingresa nombre'}),
+            'email':forms.EmailInput(attrs={'class':'form-control','placeholder':'Ingresa email'}),
             'fecha_descuento':forms.DateInput(attrs={'class':'form-control','type':'date'}),
             'tipo_descuento':forms.TextInput(attrs={'class':'form-control','placeholder':'Ingresa tipo descuento'}),
         }
+
+    def clean_email(self):
+        email = (self.cleaned_data.get('email') or '').strip()
+        if not email:
+            raise forms.ValidationError('Ingresa un correo electrónico.')
+        return email
+
+    def clean_passwd(self):
+        password = self.cleaned_data.get('passwd', '')
+        if not password:
+            if self.instance.pk and self.instance.passwd:
+                return self.instance.passwd
+            raise forms.ValidationError('Ingresa una contraseña.')
+        return password
 
 class CredencialesForm(forms.ModelForm):
     class Meta:
@@ -139,9 +174,15 @@ class CredencialesForm(forms.ModelForm):
 
 
 class SocioPerfilForm(forms.ModelForm):
+    passwd = forms.CharField(
+        label='Contraseña',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa tu nueva contraseña'}),
+        required=False,
+    )
+
     class Meta:
         model = Socios
-        fields = ['nombre', 'apellido', 'email', 'telefono']
+        fields = ['nombre', 'apellido', 'email', 'telefono', 'passwd']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa tu nombre'}),
             'apellido': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa tu apellido'}),
@@ -149,9 +190,21 @@ class SocioPerfilForm(forms.ModelForm):
             'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa tu teléfono'}),
         }
 
-    def save(self, usuario, commit=True):
+    def save(self, usuario=None, commit=True):
         socio = super().save(commit=False)
-        socio.id_usuario = usuario
+        new_password = self.cleaned_data.get('passwd')
+        if usuario is not None:
+            socio.id_usuario = usuario
+        if new_password:
+            socio.passwd = new_password
         if commit:
             socio.save()
         return socio
+
+    def clean_passwd(self):
+        password = self.cleaned_data.get('passwd', '')
+        if not password:
+            if not self.instance.pk or not getattr(self.instance, 'passwd', ''):
+                raise forms.ValidationError('Ingresa una contraseña para tu cuenta de socio.')
+            return self.instance.passwd
+        return password

@@ -4,60 +4,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ecosistemas LA</title>
+    <title>Ecosistema LA - Personas que conectan</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
+    <!-- Barra Superior con redes sociales -->
+    <div class="barra-superior">
+        <div class="barra-superior-contenido">
+            <span class="barra-superior-texto">Personas que conectan</span>
+            <div class="enlaces-sociales">
+                <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navbar Principal -->
     <nav class="navbar">
         <div class="navbar-inner">
-            <span class="navbar-brand">Personas que conectan</span>
+            <a href="{% url 'inicio' %}" class="navbar-brand">
+                <img src="{% static 'img/logo.png' %}" alt="Ecosistema LA Logo" class="logo-imagen">
+            </a>
+            
             <div class="navbar-links">
-                <a href="{% url 'inicio' %}">Inicio</a>
-                {% if request.session.user_id %}
-                    <a href="{% url 'panel' %}">Panel</a>
-                    <a href="{% url 'logout' %}" class="logout-link">Cerrar sesión</a>
+                <a href="#">Somos</a>
+                <a href="#">Socios</a>
+                <a href="#">Networking</a>
+                <a href="#">Mapeo</a>
+                <a href="#">Agenda</a>
+                <a href="#">PodCast</a>
+                <a href="#">PlayList</a>
+                <a href="#">Blog</a>
+                <a href="#">Tienda</a>
+                <a href="#">Contacto</a>
+            </div>
+
+            <div class="acciones-navbar">
+                {% if request.session.auth_id %}
+                    <a href="{% url 'panel' %}" class="boton-carrito">
+                        <i class="fas fa-user"></i>
+                    </a>
+                    <a href="{% url 'logout' %}" class="registro-button" style="text-decoration: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.9rem;">Cerrar sesión</a>
                 {% else %}
-                    <a href="{% url 'login' %}">Iniciar sesión</a>
-                    <a href="{% url 'registro' %}" class="registro-link">Registrarse</a>
+                    <a href="{% url 'login' %}" style="color: var(--gris-oscuro); text-decoration: none; font-weight: 600;">Iniciar sesión</a>
+                    <a href="{% url 'registro' %}" class="registro-button" style="text-decoration: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.9rem;">Registrarse</a>
                 {% endif %}
+                <a href="#" class="boton-carrito">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="insignia-carrito">0</span>
+                </a>
             </div>
         </div>
     </nav>
 
     {% block contenido %}
-        
-    <div class="container">
-        <div class="hero gradient-header">
-            <span class="badge-accent">Ecosistema</span>
-            <h2>Socios Corporación de Ecosistemas</h2>
-            <p>Trabajando juntos por un futuro más verde y sostenible</p>
+    <!-- Hero Slider -->
+    <div class="hero-deslizador">
+        <div class="hero-diapositiva" style="background-image: url('{% static 'images/hero-bg.jpg' %}');">
+            <div class="hero-contenido">
+                <span class="insignia-hero">Creemos en el talento de BioBio</span>
+                <h1>Conectamos a personas para potenciarlas y con ellas a nuestro Ecosistema</h1>
+                <p>Trabajando juntos por un futuro más verde y sostenible</p>
+                <a href="#" class="boton-llamada-accion">Únete a nuestras Comunidades de Whatsapp</a>
+            </div>
         </div>
-        <div class="features colors-grid card-link">
-            <a href="{% if request.session.user_id %}{% url 'panel' %}{% else %}{% url 'login' %}{% endif %}">
-                <div class="feature-card color-card">
+        <div class="puntos-deslizador">
+            <span class="punto"></span>
+            <span class="punto"></span>
+            <span class="punto"></span>
+            <span class="punto"></span>
+            <span class="punto activo"></span>
+        </div>
+    </div>
+
+    <!-- Container Principal -->
+    <div class="container">
+        <!-- Features Grid -->
+        <div class="features colors-grid">
+            <a href="{% if request.session.auth_id %}{% url 'panel' %}{% else %}{% url 'login' %}{% endif %}" class="card-link">
+                <div class="feature-card">
                     <i class="fas fa-users"></i>
                     <h3>Socios</h3>
-                    <p>Gestiona y visualiza los socios de la corporación.</p>
+                    <p>Gestiona y visualiza los socios de la corporación. Únete a nuestra red de colaboradores comprometidos.</p>
                 </div>
             </a>
-            <div class="feature-card color-card">
+            
+            <div class="feature-card">
                 <i class="fas fa-hands-helping"></i>
                 <h3>Comunidad</h3>
-                <p>Construimos una comunidad comprometida con el cambio positivo.</p>
+                <p>Construimos una comunidad comprometida con el cambio positivo y el desarrollo sostenible.</p>
             </div>
-            <div class="feature-card color-card">
+            
+            <div class="feature-card">
                 <i class="fas fa-seedling"></i>
                 <h3>Educación</h3>
-                <p>Educamos sobre la importancia de la conservación ambiental.</p>
+                <p>Educamos sobre la importancia de la conservación ambiental y el cuidado del ecosistema.</p>
             </div>
         </div>
         
+        <!-- Sección de Información -->
         <section>
             <h2>Información Adicional</h2>
-            <p>Para más información sobre la Corporación de Ecosistemas, por favor visita nuestra <a href="#">página de información</a>.</p>
+            <p>Para más información sobre la Corporación de Ecosistemas, por favor visita nuestra <a href="#">página de información</a>. Descubre cómo puedes formar parte de esta iniciativa que transforma vidas y territorios.</p>
         </section>
     </div>
     {% endblock contenido %}
+
+    <!-- Footer -->
+    <footer style="background: var(--gris-oscuro); color: var(--blanco); padding: 2rem 0; text-align: center; margin-top: 4rem;">
+        <div style="max-width: 1400px; margin: 0 auto; padding: 0 20px;">
+            <p>&copy; 2025 Ecosistema LA - Todos los derechos reservados</p>
+            <div style="margin-top: 1rem;">
+                <a href="#" style="color: var(--blanco); margin: 0 1rem; text-decoration: none;">Términos</a>
+                <a href="#" style="color: var(--blanco); margin: 0 1rem; text-decoration: none;">Privacidad</a>
+                <a href="#" style="color: var(--blanco); margin: 0 1rem; text-decoration: none;">Contacto</a>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>

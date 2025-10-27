@@ -9,8 +9,16 @@
         </div>
         <div class="dashboard-user">
             <span class="role-badge">
-                <i class="fas {% if user_type == 'admin' %}fa-user-shield{% else %}fa-user{% endif %}"></i>
-                {% if user_type == 'admin' %}Administrador{% else %}Usuario{% endif %}
+                <i class="fas {% if user_type == 'admin' %}fa-user-shield{% elif user_type == 'socio' %}fa-user-group{% elif user_type == 'proveedor' %}fa-store{% else %}fa-user{% endif %}"></i>
+                {% if user_type == 'admin' %}
+                    Administrador
+                {% elif user_type == 'socio' %}
+                    Socio
+                {% elif user_type == 'proveedor' %}
+                    Proveedor
+                {% else %}
+                    Usuario
+                {% endif %}
             </span>
             <a href="{% url 'logout' %}" class="dashboard-logout">Cerrar sesión</a>
         </div>
@@ -34,6 +42,13 @@
         </aside>
 
         <section class="dashboard-content">
+            {% if messages %}
+                <div class="dashboard-messages">
+                    {% for message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
 
             <div class="dashboard-cards">
                 {% for accion in acciones %}

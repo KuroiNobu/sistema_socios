@@ -22,7 +22,7 @@ from sistemaApp.forms import (
 def login_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        if not request.session.get('user_id'):
+        if not request.session.get('auth_id'):
             messages.info(request, 'Inicia sesión para continuar.')
             return redirect('login')
         return view_func(request, *args, **kwargs)
@@ -33,7 +33,7 @@ def login_required(view_func):
 def admin_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        if not request.session.get('user_id'):
+        if not request.session.get('auth_id'):
             messages.info(request, 'Inicia sesión para continuar.')
             return redirect('login')
         if request.session.get('user_type') != Usuarios.ADMIN:
@@ -124,9 +124,35 @@ USER_ACTIONS = [
 ]
 
 
+SOCIO_ACTIONS = [
+    {
+        'title': 'Mi perfil',
+        'description': 'Actualiza tus datos y mantente al día como socio.',
+        'icon': 'fas fa-user-circle',
+        'primary_url': 'perfil_socio',
+        'primary_label': 'Editar perfil',
+        'secondary_url': None,
+        'secondary_label': None,
+    },
+]
+
+
+PROVEEDOR_ACTIONS = [
+    {
+        'title': 'Información de proveedor',
+        'description': 'Contacta con administración para actualizar convenios o beneficios.',
+        'icon': 'fas fa-store',
+        'primary_url': None,
+        'primary_label': None,
+        'secondary_url': None,
+        'secondary_label': None,
+    },
+]
+
+
 # Create your views here.
 def login_view(request):
-    if request.session.get('user_id'):
+    if request.session.get('auth_id'):
         return redirect('panel')
 
     form = LoginForm(request.POST or None)
@@ -135,21 +161,51 @@ def login_view(request):
         email = form.cleaned_data['email']
         password = form.cleaned_data['password']
 
-        try:
-            usuario = Usuarios.objects.get(email=email)
-        except Usuarios.DoesNotExist:
-            messages.error(request, 'No encontramos una cuenta con el correo proporcionado.')
-        else:
+        usuario = Usuarios.objects.filter(email=email).first()
+        if usuario:
             if usuario.passwd != password:
                 messages.error(request, 'La contraseña ingresada no es correcta.')
             else:
                 request.session.flush()
-                request.session['user_id'] = usuario.id_usuario
+                request.session['auth_id'] = usuario.id_usuario
+                request.session['auth_scope'] = 'usuario'
                 request.session['user_name'] = usuario.nombre
                 request.session['user_email'] = usuario.email
                 request.session['user_type'] = usuario.tipo_usuario
                 messages.success(request, f'Bienvenido {usuario.nombre}.')
                 return redirect('panel')
+        else:
+            socio = Socios.objects.filter(email=email).first()
+            if socio:
+                if not socio.passwd or socio.passwd != password:
+                    messages.error(request, 'La contraseña ingresada no es correcta.')
+                else:
+                    request.session.flush()
+                    request.session['auth_id'] = socio.id_socio
+                    request.session['auth_scope'] = 'socio'
+                    request.session['socio_id'] = socio.id_socio
+                    request.session['user_name'] = socio.nombre
+                    request.session['user_email'] = socio.email
+                    request.session['user_type'] = 'socio'
+                    messages.success(request, f'Bienvenido {socio.nombre}.')
+                    return redirect('panel')
+            else:
+                proveedor = Proveedores.objects.filter(email=email).first()
+                if proveedor:
+                    if not proveedor.passwd or proveedor.passwd != password:
+                        messages.error(request, 'La contraseña ingresada no es correcta.')
+                    else:
+                        request.session.flush()
+                        request.session['auth_id'] = proveedor.id_proveedor
+                        request.session['auth_scope'] = 'proveedor'
+                        request.session['proveedor_id'] = proveedor.id_proveedor
+                        request.session['user_name'] = proveedor.nombre
+                        request.session['user_email'] = proveedor.email
+                        request.session['user_type'] = 'proveedor'
+                        messages.success(request, f'Bienvenido {proveedor.nombre}.')
+                        return redirect('panel')
+                else:
+                    messages.error(request, 'No encontramos una cuenta con el correo proporcionado.')
 
     return render(request, 'login.html', {'form': form})
 
@@ -161,7 +217,7 @@ def logout_view(request):
 
 
 def registro_view(request):
-    if request.session.get('user_id'):
+    if request.session.get('auth_id'):
         return redirect('panel')
 
     form = RegistroUsuarioForm(request.POST or None)
@@ -169,7 +225,8 @@ def registro_view(request):
     if request.method == 'POST' and form.is_valid():
         usuario = form.save()
         request.session.flush()
-        request.session['user_id'] = usuario.id_usuario
+        request.session['auth_id'] = usuario.id_usuario
+        request.session['auth_scope'] = 'usuario'
         request.session['user_name'] = usuario.nombre
         request.session['user_email'] = usuario.email
         request.session['user_type'] = usuario.tipo_usuario
@@ -182,7 +239,16 @@ def registro_view(request):
 @login_required
 def panel(request):
     user_type = request.session.get('user_type', Usuarios.ADMIN)
-    acciones = ADMIN_ACTIONS if user_type == Usuarios.ADMIN else USER_ACTIONS
+
+    if user_type == Usuarios.ADMIN:
+        acciones = ADMIN_ACTIONS
+    elif user_type == 'socio':
+        acciones = SOCIO_ACTIONS
+    elif user_type == 'proveedor':
+        acciones = PROVEEDOR_ACTIONS
+    else:
+        acciones = USER_ACTIONS
+
     context = {
         'acciones': acciones,
         'titulo': 'Panel principal',
@@ -198,16 +264,31 @@ def inicio(request):
 
 @login_required
 def perfil_socio(request):
-    if request.session.get('user_type') != Usuarios.NORMAL:
-        messages.info(request, 'Esta sección es solo para usuarios estándar.')
+    user_type = request.session.get('user_type')
+    auth_scope = request.session.get('auth_scope')
+    auth_id = request.session.get('auth_id')
+
+    if user_type not in [Usuarios.NORMAL, 'socio']:
+        messages.info(request, 'Esta sección es solo para usuarios o socios registrados.')
         return redirect('panel')
 
-    usuario = Usuarios.objects.get(pk=request.session['user_id'])
-    socio = Socios.objects.filter(id_usuario=usuario).first()
+    usuario = None
+    socio = None
+
+    if user_type == Usuarios.NORMAL and auth_scope == 'usuario':
+        usuario = Usuarios.objects.get(pk=auth_id)
+        socio = Socios.objects.filter(id_usuario=usuario).first()
+    elif user_type == 'socio' and auth_scope == 'socio':
+        socio = Socios.objects.filter(pk=auth_id).first()
+        if socio:
+            usuario = socio.id_usuario
+
     form = SocioPerfilForm(request.POST or None, instance=socio)
 
     if request.method == 'POST' and form.is_valid():
-        form.save(usuario)
+        socio_actualizado = form.save(usuario)
+        request.session['user_name'] = socio_actualizado.nombre
+        request.session['user_email'] = socio_actualizado.email
         messages.success(request, 'Tu información de socio se guardó correctamente.')
         return redirect('panel')
 
