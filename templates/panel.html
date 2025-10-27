@@ -6,7 +6,6 @@
     <header class="dashboard-header">
         <div class="dashboard-title">
             <h1>Personas que conectan</h1>
-            <p>Bienvenido {{ usuario }}. Selecciona la sección que deseas administrar.</p>
         </div>
         <div class="dashboard-user">
             <span class="role-badge">
@@ -35,13 +34,6 @@
         </aside>
 
         <section class="dashboard-content">
-            {% if messages %}
-                <div class="dashboard-messages">
-                    {% for message in messages %}
-                        <p>{{ message }}</p>
-                    {% endfor %}
-                </div>
-            {% endif %}
 
             <div class="dashboard-cards">
                 {% for accion in acciones %}
