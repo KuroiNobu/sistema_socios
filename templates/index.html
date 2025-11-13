@@ -26,7 +26,7 @@
     <nav class="navbar">
         <div class="navbar-inner">
             <a href="{% url 'inicio' %}" class="navbar-brand">
-                <img src="{% static 'img/logo.png' %}" alt="Ecosistema LA Logo" class="logo-imagen">
+                <img src="{% static 'images/logo.png' %}" alt="Ecosistema LA Logo" class="logo-imagen">
             </a>
             
             <div class="navbar-links">
@@ -43,14 +43,14 @@
             </div>
 
             <div class="acciones-navbar">
-                {% if request.session.auth_id %}
+                {% if request.session.user_id %}
                     <a href="{% url 'panel' %}" class="boton-carrito">
                         <i class="fas fa-user"></i>
                     </a>
-                    <a href="{% url 'logout' %}" class="registro-button" style="text-decoration: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.9rem;">Cerrar sesión</a>
+                    <a href="{% url 'logout' %}" class="boton-cerrar-sesion">Cerrar sesión</a>
                 {% else %}
-                    <a href="{% url 'login' %}" style="color: var(--gris-oscuro); text-decoration: none; font-weight: 600;">Iniciar sesión</a>
-                    <a href="{% url 'registro' %}" class="registro-button" style="text-decoration: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.9rem;">Registrarse</a>
+                    <a href="{% url 'login' %}" class="boton-iniciar-sesion">Iniciar sesión</a>
+                    <a href="{% url 'registro' %}" class="boton-registrarse">Registrarse</a>
                 {% endif %}
                 <a href="#" class="boton-carrito">
                     <i class="fas fa-shopping-cart"></i>
@@ -84,7 +84,7 @@
     <div class="container">
         <!-- Features Grid -->
         <div class="features colors-grid">
-            <a href="{% if request.session.auth_id %}{% url 'panel' %}{% else %}{% url 'login' %}{% endif %}" class="card-link">
+            <a href="{% if request.session.user_id %}{% url 'panel' %}{% else %}{% url 'login' %}{% endif %}" class="card-link">
                 <div class="feature-card">
                     <i class="fas fa-users"></i>
                     <h3>Socios</h3>
