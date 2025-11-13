@@ -16,7 +16,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from sistemaApp.views import inicio, login_view, logout_view, panel, registro_view, perfil_socio
+from sistemaApp.views import (
+    inicio,
+    login_view,
+    logout_view,
+    panel,
+    perfil_socio,
+    area_personal,
+    socio_pagos,
+    socio_cuotas,
+    socio_credencial,
+)
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -24,9 +34,12 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('',inicio,name='inicio'),
     path('login/', login_view, name='login'),
-    path('registro/', registro_view, name='registro'),
     path('logout/', logout_view, name='logout'),
     path('perfil-socio/', perfil_socio, name='perfil_socio'),
     path('panel/', panel, name='panel'),
+        path('area-personal/', area_personal, name='area_personal'),
+    path('mis-pagos/', socio_pagos, name='socio_pagos'),
+    path('mis-cuotas/', socio_cuotas, name='socio_cuotas'),
+    path('mi-credencial/', socio_credencial, name='socio_credencial'),
     path('sistemas/',include('sistemaApp.urls'))
 ] + static (settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)

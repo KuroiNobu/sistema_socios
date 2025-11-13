@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.core.files.storage import FileSystemStorage
 
-from sistemaApp.models import Proveedores, Descuentos, Usuarios, Credenciales, Socios, Pagos, Cuotas
+from sistemaApp.models import Proveedores, Descuentos, Usuarios, Credenciales, Socios, Pagos, Cuotas, SolicitudIngreso
 from sistemaApp.forms import (
     ProveedoresForm,
     DescuentosForm,
@@ -14,8 +14,8 @@ from sistemaApp.forms import (
     PagosForm,
     CuotasForm,
     LoginForm,
-    RegistroUsuarioForm,
     SocioPerfilForm,
+    SolicitudIngresoForm,
 )
 
 
@@ -36,9 +36,9 @@ def admin_required(view_func):
         if not request.session.get('auth_id'):
             messages.info(request, 'Inicia sesión para continuar.')
             return redirect('login')
-        if request.session.get('user_type') != Usuarios.ADMIN:
+        if request.session.get('user_type') != 'admin':
             messages.warning(request, 'No tienes permisos para acceder a esta sección.')
-            return redirect('panel')
+            return redirect('area_personal')
         return view_func(request, *args, **kwargs)
 
     return wrapper
@@ -53,6 +53,15 @@ ADMIN_ACTIONS = [
         'primary_label': 'Registrar usuario',
         'secondary_url': 'usuarios',
         'secondary_label': 'Ver usuarios',
+    },
+    {
+        'title': 'Solicitudes de ingreso',
+        'description': 'Revisa las solicitudes para ser socio o proveedor.',
+        'icon': 'fas fa-inbox',
+        'primary_url': None,
+        'primary_label': None,
+        'secondary_url': 'solicitudes_ingreso',
+        'secondary_label': 'Ver solicitudes',
     },
     {
         'title': 'Socios',
@@ -111,19 +120,6 @@ ADMIN_ACTIONS = [
 ]
 
 
-USER_ACTIONS = [
-    {
-        'title': 'Perfil de socio',
-        'description': 'Completa o actualiza tus datos para convertirte en socio.',
-        'icon': 'fas fa-id-badge',
-        'primary_url': 'perfil_socio',
-        'primary_label': 'Gestionar mi perfil',
-        'secondary_url': None,
-        'secondary_label': None,
-    },
-]
-
-
 SOCIO_ACTIONS = [
     {
         'title': 'Mi perfil',
@@ -131,6 +127,33 @@ SOCIO_ACTIONS = [
         'icon': 'fas fa-user-circle',
         'primary_url': 'perfil_socio',
         'primary_label': 'Editar perfil',
+        'secondary_url': None,
+        'secondary_label': None,
+    },
+    {
+        'title': 'Mis pagos',
+        'description': 'Consulta los pagos registrados a tu nombre.',
+        'icon': 'fas fa-money-bill-wave',
+        'primary_url': 'socio_pagos',
+        'primary_label': 'Ver pagos',
+        'secondary_url': None,
+        'secondary_label': None,
+    },
+    {
+        'title': 'Mis cuotas',
+        'description': 'Revisa el estado de tus cuotas vigentes.',
+        'icon': 'fas fa-calendar-check',
+        'primary_url': 'socio_cuotas',
+        'primary_label': 'Ver cuotas',
+        'secondary_url': None,
+        'secondary_label': None,
+    },
+    {
+        'title': 'Mi credencial',
+        'description': 'Visualiza tu credencial digital generada por administración.',
+        'icon': 'fas fa-id-card',
+        'primary_url': 'socio_credencial',
+        'primary_label': 'Ver credencial',
         'secondary_url': None,
         'secondary_label': None,
     },
@@ -152,8 +175,13 @@ PROVEEDOR_ACTIONS = [
 
 # Create your views here.
 def login_view(request):
+    
+    
+    
     if request.session.get('auth_id'):
-        return redirect('panel')
+        if request.session.get('user_type') == 'admin':
+            return redirect('panel')
+        return redirect('area_personal')
 
     form = LoginForm(request.POST or None)
 
@@ -171,7 +199,7 @@ def login_view(request):
                 request.session['auth_scope'] = 'usuario'
                 request.session['user_name'] = usuario.nombre
                 request.session['user_email'] = usuario.email
-                request.session['user_type'] = usuario.tipo_usuario
+                request.session['user_type'] = 'admin'
                 messages.success(request, f'Bienvenido {usuario.nombre}.')
                 return redirect('panel')
         else:
@@ -188,7 +216,7 @@ def login_view(request):
                     request.session['user_email'] = socio.email
                     request.session['user_type'] = 'socio'
                     messages.success(request, f'Bienvenido {socio.nombre}.')
-                    return redirect('panel')
+                    return redirect('area_personal')
             else:
                 proveedor = Proveedores.objects.filter(email=email).first()
                 if proveedor:
@@ -203,7 +231,7 @@ def login_view(request):
                         request.session['user_email'] = proveedor.email
                         request.session['user_type'] = 'proveedor'
                         messages.success(request, f'Bienvenido {proveedor.nombre}.')
-                        return redirect('panel')
+                        return redirect('area_personal')
                 else:
                     messages.error(request, 'No encontramos una cuenta con el correo proporcionado.')
 
@@ -216,72 +244,89 @@ def logout_view(request):
     return redirect('login')
 
 
-def registro_view(request):
-    if request.session.get('auth_id'):
-        return redirect('panel')
-
-    form = RegistroUsuarioForm(request.POST or None)
-
-    if request.method == 'POST' and form.is_valid():
-        usuario = form.save()
-        request.session.flush()
-        request.session['auth_id'] = usuario.id_usuario
-        request.session['auth_scope'] = 'usuario'
-        request.session['user_name'] = usuario.nombre
-        request.session['user_email'] = usuario.email
-        request.session['user_type'] = usuario.tipo_usuario
-        messages.success(request, 'Cuenta creada con éxito. ¡Bienvenido!')
-        return redirect('panel')
-
-    return render(request, 'registro.html', {'form': form})
+@admin_required
+def panel(request):
+    context = {
+        'acciones': ADMIN_ACTIONS,
+        'titulo': 'Panel administrativo',
+        'usuario': request.session.get('user_name', ''),
+        'user_type': 'admin',
+    }
+    return render(request, 'panel.html', context)
 
 
 @login_required
-def panel(request):
-    user_type = request.session.get('user_type', Usuarios.ADMIN)
+def area_personal(request):
+    user_type = request.session.get('user_type', '')
 
-    if user_type == Usuarios.ADMIN:
-        acciones = ADMIN_ACTIONS
-    elif user_type == 'socio':
+    if user_type == 'admin':
+        return redirect('panel')
+
+    if user_type == 'socio':
         acciones = SOCIO_ACTIONS
     elif user_type == 'proveedor':
         acciones = PROVEEDOR_ACTIONS
     else:
-        acciones = USER_ACTIONS
+        acciones = []
 
     context = {
         'acciones': acciones,
-        'titulo': 'Panel principal',
+        'titulo': 'Mi área personal',
         'usuario': request.session.get('user_name', ''),
         'user_type': user_type,
     }
     return render(request, 'panel.html', context)
 
 
+def obtener_socio_y_usuario(request):
+    auth_scope = request.session.get('auth_scope')
+    auth_id = request.session.get('auth_id')
+
+    socio = None
+    usuario = None
+
+    if auth_scope == 'socio':
+        socio = Socios.objects.filter(pk=auth_id).select_related('id_usuario').first()
+        if socio:
+            usuario = socio.id_usuario
+    elif auth_scope == 'usuario':
+        usuario = Usuarios.objects.filter(pk=auth_id).first()
+        if usuario:
+            socio = Socios.objects.filter(id_usuario=usuario).first()
+
+    return socio, usuario
+
+
 def inicio(request):
-    return render(request, 'index.html')
+    form = SolicitudIngresoForm(request.POST or None)
+
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            messages.success(request, '¡Gracias! Recibimos tu solicitud y nos pondremos en contacto pronto.')
+            return redirect('inicio')
+        else:
+            messages.error(request, 'Revisa la información ingresada e inténtalo nuevamente.')
+
+    context = {
+        'form_solicitud': form,
+    }
+    return render(request, 'index.html', context)
 
 
 @login_required
 def perfil_socio(request):
     user_type = request.session.get('user_type')
-    auth_scope = request.session.get('auth_scope')
-    auth_id = request.session.get('auth_id')
 
-    if user_type not in [Usuarios.NORMAL, 'socio']:
-        messages.info(request, 'Esta sección es solo para usuarios o socios registrados.')
-        return redirect('panel')
+    if user_type != 'socio':
+        messages.info(request, 'Solo un administrador puede asignarte el rol de socio. Contacta a administración.')
+        return redirect('area_personal')
 
-    usuario = None
-    socio = None
+    socio, usuario = obtener_socio_y_usuario(request)
 
-    if user_type == Usuarios.NORMAL and auth_scope == 'usuario':
-        usuario = Usuarios.objects.get(pk=auth_id)
-        socio = Socios.objects.filter(id_usuario=usuario).first()
-    elif user_type == 'socio' and auth_scope == 'socio':
-        socio = Socios.objects.filter(pk=auth_id).first()
-        if socio:
-            usuario = socio.id_usuario
+    if not socio:
+        messages.info(request, 'Aún no tienes un perfil de socio asignado. Contacta a administración.')
+        return redirect('area_personal')
 
     form = SocioPerfilForm(request.POST or None, instance=socio)
 
@@ -290,7 +335,7 @@ def perfil_socio(request):
         request.session['user_name'] = socio_actualizado.nombre
         request.session['user_email'] = socio_actualizado.email
         messages.success(request, 'Tu información de socio se guardó correctamente.')
-        return redirect('panel')
+        return redirect('area_personal')
 
     context = {
         'form': form,
@@ -298,6 +343,81 @@ def perfil_socio(request):
         'tiene_registro': socio is not None,
     }
     return render(request, 'perfil_socio.html', context)
+
+
+@login_required
+def socio_pagos(request):
+    socio, _ = obtener_socio_y_usuario(request)
+
+    if not socio:
+        messages.info(request, 'Necesitas completar tu perfil de socio para ver tus pagos.')
+        return redirect('perfil_socio')
+
+    pagos = Pagos.objects.filter(socio=socio).order_by('-fecha_pago')
+    context = {
+        'titulo': 'Mis pagos',
+        'socio': socio,
+        'pagos': pagos,
+    }
+    return render(request, 'socios/pagos.html', context)
+
+
+@login_required
+def socio_cuotas(request):
+    socio, _ = obtener_socio_y_usuario(request)
+
+    if not socio:
+        messages.info(request, 'Necesitas completar tu perfil de socio para ver tus cuotas.')
+        return redirect('perfil_socio')
+
+    cuotas = Cuotas.objects.filter(id_pago__socio=socio).select_related('id_pago').order_by('-fecha_vencimiento')
+    context = {
+        'titulo': 'Mis cuotas',
+        'socio': socio,
+        'cuotas': cuotas,
+    }
+    return render(request, 'socios/cuotas.html', context)
+
+
+@login_required
+def socio_credencial(request):
+    socio, _ = obtener_socio_y_usuario(request)
+
+    if not socio:
+        messages.info(request, 'Necesitas completar tu perfil de socio para acceder a tu credencial.')
+        return redirect('perfil_socio')
+
+    credencial = Credenciales.objects.filter(id_socio=socio).first()
+    qr_img = None
+    payload_json = None
+
+    if credencial:
+        payload = {
+            "type": "credentials",
+            "id": credencial.pk,
+            "user": socio.nombre,
+            "note": getattr(credencial, "codigo_qr", ""),
+        }
+        payload_json = json.dumps(payload, ensure_ascii=False)
+
+        qr = qrcode.QRCode(box_size=8, border=3)
+        qr.add_data(payload_json)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        b64 = base64.b64encode(buf.getvalue()).decode()
+        qr_img = f"data:image/png;base64,{b64}"
+
+    context = {
+        'titulo': 'Mi credencial',
+        'socio': socio,
+        'credencial': credencial,
+        'qr_img': qr_img,
+        'payload_json': payload_json,
+    }
+    return render(request, 'socios/credencial.html', context)
 
 @admin_required
 def proveedores(request):
@@ -391,8 +511,11 @@ def eliminarDescuentos(request,id):
 
 @admin_required
 def usuarios(request):
-    usuarios = Usuarios.objects.all()
-    data =  {'titulo': 'Lista de Usuarios', 'usuarios': usuarios}
+    usuarios = Usuarios.objects.all().order_by('id_usuario')
+    data =  {
+        'titulo': 'Lista de Usuarios',
+        'usuarios': usuarios,
+    }
     return render(request, 'sistemas/usuarios.html', data)
 
 @admin_required
@@ -479,6 +602,25 @@ def socios(request):
     socios = Socios.objects.all()
     data =  {'titulo': 'Lista de Socios', 'socios': socios}
     return render(request, 'sistemas/socios.html', data)
+
+@admin_required
+def solicitudes_ingreso(request):
+    filtro_tipo = request.GET.get('tipo', '').strip()
+    solicitudes = SolicitudIngreso.objects.all()
+
+    if filtro_tipo in dict(SolicitudIngreso.TIPO_CHOICES):
+        solicitudes = solicitudes.filter(tipo=filtro_tipo)
+
+    solicitudes = solicitudes.order_by('-fecha_solicitud')
+
+    context = {
+        'titulo': 'Solicitudes de ingreso',
+        'solicitudes': solicitudes,
+        'filtro_tipo': filtro_tipo,
+        'tipos': SolicitudIngreso.TIPO_CHOICES,
+    }
+    return render(request, 'sistemas/solicitudes.html', context)
+
 
 @admin_required
 def crearSocios(request):

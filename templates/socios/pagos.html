@@ -1,0 +1,33 @@
+{% extends 'index.html' %}
+
+{% block contenido %}
+<div class="container">
+    <h2 class="subtitulo-seccion">{{ titulo }}</h2>
+    <p class="descripcion-seccion">Revisa los pagos asociados a tu cuenta de socio.</p>
+
+    {% if pagos %}
+        <table class="tabla-datos">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Monto</th>
+                    <th>Fecha de pago</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pago in pagos %}
+                    <tr>
+                        <td>{{ pago.id_pago }}</td>
+                        <td>${{ pago.monto }}</td>
+                        <td>{{ pago.fecha_pago }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="mensaje-vacio">Aún no registramos pagos asociados a tu cuenta.</p>
+    {% endif %}
+
+    <a href="{% url 'area_personal' %}" class="boton-volver">Volver a mi área</a>
+</div>
+{% endblock contenido %}

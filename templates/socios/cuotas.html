@@ -1,0 +1,41 @@
+{% extends 'index.html' %}
+
+{% block contenido %}
+<div class="container">
+    <h2 class="subtitulo-seccion">{{ titulo }}</h2>
+    <p class="descripcion-seccion">Aquí puedes revisar las cuotas vinculadas a tus pagos.</p>
+
+    {% if cuotas %}
+        <table class="tabla-datos">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Monto</th>
+                    <th>Fecha de vencimiento</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cuota in cuotas %}
+                    <tr>
+                        <td>{{ cuota.id_cuota }}</td>
+                        <td>${{ cuota.monto }}</td>
+                        <td>{{ cuota.fecha_vencimiento }}</td>
+                        <td>
+                            {% if cuota.pagado %}
+                                <span class="estado estado-pagado">Pagada</span>
+                            {% else %}
+                                <span class="estado estado-pendiente">Pendiente</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="mensaje-vacio">No tienes cuotas registradas por el momento.</p>
+    {% endif %}
+
+    <a href="{% url 'area_personal' %}" class="boton-volver">Volver a mi área</a>
+</div>
+{% endblock contenido %}

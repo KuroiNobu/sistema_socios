@@ -1,6 +1,6 @@
 from django import forms
 from django.utils.html import format_html
-from sistemaApp.models import Usuarios, Credenciales, Socios, Pagos, Cuotas, Descuentos, Proveedores
+from sistemaApp.models import Usuarios, Credenciales, Socios, Pagos, Cuotas, Descuentos, Proveedores, SolicitudIngreso
 
 
 class LoginForm(forms.Form):
@@ -13,30 +13,6 @@ class LoginForm(forms.Form):
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa tu contraseña'})
     )
 
-
-class RegistroUsuarioForm(forms.ModelForm):
-    class Meta:
-        model = Usuarios
-        fields = ['run', 'nombre', 'email', 'passwd']
-        labels = {
-            'run': 'Run',
-            'nombre': 'Nombre',
-            'email': 'Email',
-            'passwd': 'Contraseña',
-        }
-        widgets = {
-            'run': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa tu Run'}),
-            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa tu nombre'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa tu correo'}),
-            'passwd': forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Crea una contraseña'}),
-        }
-
-    def save(self, commit=True):
-        usuario = super().save(commit=False)
-        usuario.tipo_usuario = Usuarios.NORMAL
-        if commit:
-            usuario.save()
-        return usuario
 
 class verLogo(forms.widgets.FileInput):
     def render(self, name, value, attrs=None, **kwargs):
@@ -56,7 +32,6 @@ class UsuariosForm(forms.ModelForm):
             'nombre': 'Nombre',
             'email': 'Email',
             'passwd': 'Contraseña',
-            'tipo_usuario': 'Tipo de usuario',
         }
         widgets = {
             'id_usuario':forms.TextInput(attrs={'class':'form-control','placeholder':'Ingresa ID usuario'}),
@@ -64,7 +39,6 @@ class UsuariosForm(forms.ModelForm):
             'nombre':forms.TextInput(attrs={'class':'form-control','placeholder':'Ingresa nombre'}),
             'email':forms.EmailInput(attrs={'class':'form-control','placeholder':'Ingresa email'}),
             'passwd':forms.PasswordInput(attrs={'class':'form-control','placeholder':'Ingresa contraseña'}),
-            'tipo_usuario':forms.Select(attrs={'class':'form-select'}, choices=Usuarios.TIPO_USUARIO_CHOICES),
         }
 
 class SociosForm(forms.ModelForm):
@@ -208,3 +182,25 @@ class SocioPerfilForm(forms.ModelForm):
                 raise forms.ValidationError('Ingresa una contraseña para tu cuenta de socio.')
             return self.instance.passwd
         return password
+
+
+class SolicitudIngresoForm(forms.ModelForm):
+    class Meta:
+        model = SolicitudIngreso
+        fields = ['tipo', 'nombre', 'apellido', 'email', 'telefono', 'comentarios']
+        labels = {
+            'tipo': 'Quiero ser',
+            'nombre': 'Nombre',
+            'apellido': 'Apellido',
+            'email': 'Correo electrónico',
+            'telefono': 'Teléfono de contacto',
+            'comentarios': 'Comentarios adicionales',
+        }
+        widgets = {
+            'tipo': forms.RadioSelect(choices=SolicitudIngreso.TIPO_CHOICES, attrs={'class': 'solicitud-radios'}),
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa tu nombre'}),
+            'apellido': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa tu apellido (opcional)'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa tu correo'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa tu teléfono (opcional)'}),
+            'comentarios': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Cuéntanos por qué quieres unirte', 'rows': 3}),
+        }

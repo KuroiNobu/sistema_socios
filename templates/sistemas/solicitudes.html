@@ -1,0 +1,57 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block contenido %}
+<div class="tabla-admin">
+    <div class="tabla-admin-header" style="align-items: flex-end;">
+        <h1 class="subtitulo-seccion">{{ titulo }}</h1>
+        <form method="get" class="solicitud-filtros">
+            <label for="filtro-tipo">Filtrar por tipo:</label>
+            <select id="filtro-tipo" name="tipo" class="form-select" onchange="this.form.submit()">
+                <option value="">Todos</option>
+                {% for value, label in tipos %}
+                    <option value="{{ value }}" {% if value == filtro_tipo %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    {% if messages %}
+        <div class="dashboard-messages" style="margin-bottom: 1.5rem;">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="tabla-admin-wrapper">
+        <table class="tabla-datos">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Comentarios</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for solicitud in solicitudes %}
+                    <tr>
+                        <td>{{ solicitud.fecha_solicitud|date:"d/m/Y H:i" }}</td>
+                        <td>{{ solicitud.get_tipo_display }}</td>
+                        <td>{{ solicitud.nombre }}{% if solicitud.apellido %} {{ solicitud.apellido }}{% endif %}</td>
+                        <td><a href="mailto:{{ solicitud.email }}" class="card-link">{{ solicitud.email }}</a></td>
+                        <td>{% if solicitud.telefono %}{{ solicitud.telefono }}{% else %}—{% endif %}</td>
+                        <td>{{ solicitud.comentarios|default:"Sin comentarios" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="mensaje-vacio">No hay solicitudes registradas.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends 'index.html' %}
+
+{% block contenido %}
+<div class="container">
+    <h2 class="subtitulo-seccion">{{ titulo }}</h2>
+    <p class="descripcion-seccion">Visualiza tu credencial digital generada por el equipo administrativo.</p>
+
+    {% if credencial %}
+        <div class="credencial-box">
+            <div class="credencial-info">
+                <h3>Código: {{ credencial.codigo_qr }}</h3>
+                <p>Socio: {{ socio.nombre }} {{ socio.apellido }}</p>
+            </div>
+            {% if qr_img %}
+                <div class="credencial-qr">
+                    <img src="{{ qr_img }}" alt="Código QR de la credencial" />
+                    <p class="credencial-nota">Presenta este código para validar tu membresía.</p>
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <p class="mensaje-vacio">Todavía no se ha generado tu credencial. Ponte en contacto con un administrador para solicitarla.</p>
+    {% endif %}
+
+    <a href="{% url 'area_personal' %}" class="boton-volver">Volver a mi área</a>
+</div>
+{% endblock contenido %}

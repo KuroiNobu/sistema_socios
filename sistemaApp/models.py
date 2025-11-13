@@ -84,22 +84,39 @@ class Credenciales(models.Model):
         db_table ='credenciales'    
 
 class Usuarios(models.Model):
-    ADMIN = 'admin'
-    NORMAL = 'normal'
-    TIPO_USUARIO_CHOICES = [
-        (ADMIN, 'Administrador'),
-        (NORMAL, 'Usuario'),
-    ]
-
     id_usuario = models.AutoField(primary_key=True)
     run = models.CharField(max_length=12, unique=True)
     nombre = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     passwd = models.CharField(max_length=128)
-    tipo_usuario = models.CharField(max_length=10, choices=TIPO_USUARIO_CHOICES, default=ADMIN)
 
     def __str__(self):
         return self.nombre
     
     class Meta:
         db_table ='usuarios'    
+
+
+class SolicitudIngreso(models.Model):
+    SOCIO = 'socio'
+    PROVEEDOR = 'proveedor'
+    TIPO_CHOICES = [
+        (SOCIO, 'Socio'),
+        (PROVEEDOR, 'Proveedor'),
+    ]
+
+    id_solicitud = models.AutoField(primary_key=True)
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    nombre = models.CharField(max_length=150)
+    apellido = models.CharField(max_length=150, blank=True)
+    email = models.EmailField()
+    telefono = models.CharField(max_length=20, blank=True)
+    comentarios = models.TextField(blank=True)
+    fecha_solicitud = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Solicitud {self.pk} - {self.get_tipo_display()}"
+
+    class Meta:
+        db_table = 'solicitudes_ingreso'
+        ordering = ['-fecha_solicitud']

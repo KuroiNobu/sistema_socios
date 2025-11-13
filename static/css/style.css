@@ -873,12 +873,272 @@ section a:hover {
     }
 }
 
+/* Tablas de administración */
+.tabla-admin {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.tabla-admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.tabla-admin-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.solicitud-filtros {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.4rem 0.75rem;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 999px;
+}
+
+.solicitud-filtros label {
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.solicitud-filtros .form-select {
+    min-width: 180px;
+    border: none;
+    background: transparent;
+    font-size: 0.95rem;
+}
+
+/* Sección de solicitudes públicas */
+.solicitud-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2.5rem;
+    margin-top: 3rem;
+    align-items: start;
+}
+
+.solicitud-texto h2 {
+    font-size: 2.4rem;
+    margin-bottom: 1rem;
+}
+
+.solicitud-texto p {
+    margin-bottom: 1.25rem;
+    color: #555;
+}
+
+.solicitud-texto ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.solicitud-texto ul li {
+    position: relative;
+    padding-left: 1.75rem;
+    color: #444;
+}
+
+.solicitud-texto ul li::before {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: var(--verde-lima);
+    position: absolute;
+    left: 0;
+    top: 0.2rem;
+}
+
+.solicitud-formulario {
+    background: var(--blanco);
+    border-radius: 16px;
+    box-shadow: 0 15px 32px rgba(0, 0, 0, 0.08);
+    padding: 2rem;
+}
+
+.solicitud-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.solicitud-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem;
+}
+
+.solicitud-radios-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.solicitud-radios {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.solicitud-radios li {
+    display: flex;
+    align-items: center;
+}
+
+.solicitud-radios input[type="radio"] {
+    margin-right: 0.35rem;
+}
+
+.solicitud-error {
+    color: #e74c3c;
+    font-size: 0.85rem;
+    margin-top: 0.35rem;
+}
+
+@media (max-width: 768px) {
+    .solicitud-formulario {
+        padding: 1.5rem;
+    }
+
+    .solicitud-texto h2 {
+        font-size: 2rem;
+    }
+}
+
+/* Estilos para las vistas de socio */
+.subtitulo-seccion {
+    font-size: 2rem;
+    color: var(--gris-oscuro);
+    margin-bottom: 1rem;
+}
+
+.descripcion-seccion {
+    color: #666;
+    margin-bottom: 1.5rem;
+}
+
+.tabla-datos {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--blanco);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.75rem;
+}
+
+.tabla-datos th,
+.tabla-datos td {
+    padding: 1rem 1.25rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.tabla-datos th {
+    background: linear-gradient(90deg, rgba(127, 215, 0, 0.15), rgba(0, 188, 212, 0.15));
+    font-weight: 700;
+    color: var(--gris-oscuro);
+}
+
+.tabla-datos tr:last-child td {
+    border-bottom: none;
+}
+
+.mensaje-vacio {
+    padding: 1.5rem;
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 12px;
+    color: #555;
+    margin-bottom: 1.5rem;
+}
+
+.boton-volver {
+    display: inline-block;
+    padding: 0.85rem 1.5rem;
+    border-radius: 10px;
+    background: linear-gradient(90deg, var(--turquesa-cyan), var(--verde-lima));
+    color: var(--blanco);
+    text-decoration: none;
+    font-weight: 600;
+    box-shadow: 0 6px 18px rgba(0, 188, 212, 0.25);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.boton-volver:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(0, 188, 212, 0.35);
+}
+
+.estado {
+    font-weight: 600;
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+}
+
+.estado-pagado {
+    background: rgba(139, 195, 74, 0.2);
+    color: #33691e;
+}
+
+.estado-pendiente {
+    background: rgba(255, 193, 7, 0.2);
+    color: #795548;
+}
+
+.credencial-box {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    align-items: center;
+    background: var(--blanco);
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+}
+
+.credencial-info h3 {
+    margin-bottom: 0.75rem;
+    color: var(--gris-oscuro);
+}
+
+.credencial-qr img {
+    width: 180px;
+    height: 180px;
+}
+
+.credencial-nota {
+    margin-top: 0.75rem;
+    color: #666;
+    font-size: 0.95rem;
+}
+
 /* Registro Styles */
 .registro-container {
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
+        .credencial-box {
+            padding: 1.5rem;
+        }
+
+        .credencial-qr img {
+            width: 150px;
+            height: 150px;
+        }
     padding: 2rem;
     background: linear-gradient(135deg, rgba(127, 215, 0, 0.1) 0%, rgba(0, 188, 212, 0.1) 100%);
 }

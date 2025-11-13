@@ -1,6 +1,6 @@
 from django.urls import path
 from sistemaApp.views import proveedores, crearProveedores, editarProveedor, eliminarProveedor, descuentos, crearDescuentos, editarDescuentos, eliminarDescuentos, pagos, crearPagos, editarPagos, eliminarPagos
-from sistemaApp.views import usuarios, crearUsuarios, editarUsuarios, eliminarUsuarios, credenciales, crearCredenciales, editarCredenciales, eliminarCredenciales, socios, crearSocios, editarSocios, eliminarSocios, cuotas, crearCuotas, editarCuotas, eliminarCuotas
+from sistemaApp.views import usuarios, crearUsuarios, editarUsuarios, eliminarUsuarios, solicitudes_ingreso, credenciales, crearCredenciales, editarCredenciales, eliminarCredenciales, socios, crearSocios, editarSocios, eliminarSocios, cuotas, crearCuotas, editarCuotas, eliminarCuotas
 
 urlpatterns = [
     # Rutas para la gestión de proveedores
@@ -18,6 +18,7 @@ urlpatterns = [
     path('cusuarios/', crearUsuarios, name='crearusuarios'),
     path('editarusuarios/<int:id>/', editarUsuarios, name='editarusuarios'),
     path('eliminarusuarios/<int:id>/', eliminarUsuarios, name='eliminarusuarios'),
+    path('solicitudes/', solicitudes_ingreso, name='solicitudes_ingreso'),
     # Rutas para la gestión de credenciales
     path('credenciales/', credenciales, name='credenciales'),
     path('ccredenciales/', crearCredenciales, name='crearcredenciales'),
