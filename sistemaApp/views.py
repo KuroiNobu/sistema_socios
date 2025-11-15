@@ -162,11 +162,29 @@ SOCIO_ACTIONS = [
 
 PROVEEDOR_ACTIONS = [
     {
-        'title': 'Información de proveedor',
-        'description': 'Contacta con administración para actualizar convenios o beneficios.',
-        'icon': 'fas fa-store',
-        'primary_url': None,
-        'primary_label': None,
+        'title': 'Mis descuentos',
+        'description': 'Consulta y gestiona los descuentos que ofreces a la comunidad.',
+        'icon': 'fas fa-gift',
+        'primary_url': 'proveedor_descuentos',
+        'primary_label': 'Ver descuentos',
+        'secondary_url': None,
+        'secondary_label': None,
+    },
+    {
+        'title': 'Pagos registrados',
+        'description': 'Revisa el historial de pagos realizados por los socios.',
+        'icon': 'fas fa-money-check-alt',
+        'primary_url': 'proveedor_pagos',
+        'primary_label': 'Ver pagos',
+        'secondary_url': None,
+        'secondary_label': None,
+    },
+    {
+        'title': 'Cuotas programadas',
+        'description': 'Monitorea el estado de las cuotas asociadas a los socios.',
+        'icon': 'fas fa-calendar-alt',
+        'primary_url': 'proveedor_cuotas',
+        'primary_label': 'Ver cuotas',
         'secondary_url': None,
         'secondary_label': None,
     },
@@ -297,6 +315,15 @@ def obtener_socio_y_usuario(request):
     return socio, usuario
 
 
+def obtener_proveedor(request):
+    if request.session.get('auth_scope') != 'proveedor':
+        return None
+    proveedor_id = request.session.get('proveedor_id')
+    if not proveedor_id:
+        return None
+    return Proveedores.objects.filter(pk=proveedor_id).first()
+
+
 def inicio(request):
     form = SolicitudIngresoForm(request.POST or None)
 
@@ -419,6 +446,66 @@ def socio_credencial(request):
     }
     return render(request, 'socios/credencial.html', context)
 
+
+@login_required
+def proveedor_descuentos(request):
+    if request.session.get('user_type') != 'proveedor':
+        messages.info(request, 'Esta sección es exclusiva para proveedores registrados.')
+        return redirect('area_personal')
+
+    proveedor = obtener_proveedor(request)
+    if not proveedor:
+        messages.info(request, 'No encontramos tu información de proveedor. Contacta a administración.')
+        return redirect('area_personal')
+
+    descuentos = Descuentos.objects.filter(proveedor=proveedor).select_related('proveedor').order_by('-id_descuento')
+    context = {
+        'titulo': 'Mis descuentos',
+        'proveedor': proveedor,
+        'descuentos': descuentos,
+    }
+    return render(request, 'proveedores/descuentos.html', context)
+
+
+@login_required
+def proveedor_pagos(request):
+    if request.session.get('user_type') != 'proveedor':
+        messages.info(request, 'Esta sección es exclusiva para proveedores registrados.')
+        return redirect('area_personal')
+
+    proveedor = obtener_proveedor(request)
+    if not proveedor:
+        messages.info(request, 'No encontramos tu información de proveedor. Contacta a administración.')
+        return redirect('area_personal')
+
+    pagos = Pagos.objects.select_related('socio').order_by('-fecha_pago')
+    context = {
+        'titulo': 'Pagos registrados',
+        'proveedor': proveedor,
+        'pagos': pagos,
+    }
+    return render(request, 'proveedores/pagos.html', context)
+
+
+@login_required
+def proveedor_cuotas(request):
+    if request.session.get('user_type') != 'proveedor':
+        messages.info(request, 'Esta sección es exclusiva para proveedores registrados.')
+        return redirect('area_personal')
+
+    proveedor = obtener_proveedor(request)
+    if not proveedor:
+        messages.info(request, 'No encontramos tu información de proveedor. Contacta a administración.')
+        return redirect('area_personal')
+
+    cuotas = Cuotas.objects.select_related('id_pago__socio').order_by('-fecha_vencimiento')
+    context = {
+        'titulo': 'Cuotas programadas',
+        'proveedor': proveedor,
+        'cuotas': cuotas,
+    }
+    return render(request, 'proveedores/cuotas.html', context)
+
 @admin_required
 def proveedores(request):
     proveedores = Proveedores.objects.all()
@@ -436,9 +523,19 @@ def crearProveedores(request):
     if request.method == 'POST':
         form = ProveedoresForm(request.POST,request.FILES)
         if form.is_valid():
-            FileSystemStorage(location='media/proveedores/')
-            form.save()
-            messages.success(request,'Proveedor creado con éxito.')
+            admin_user = Usuarios.objects.filter(pk=request.session.get('auth_id')).first()
+            if not admin_user:
+                messages.error(request, 'No se pudo identificar al administrador que crea el proveedor.')
+                data['form'] = form
+            else:
+                FileSystemStorage(location='media/proveedores/')
+                proveedor = form.save(commit=False)
+                proveedor.id_usuario = admin_user
+                proveedor.save()
+                messages.success(request,'Proveedor creado con éxito.')
+                return redirect('proveedores')
+        else:
+            data['form'] = form
     return render(request,'sistemas/createF.html',data)
 
 @admin_required
@@ -633,9 +730,16 @@ def crearSocios(request):
     if request.method == 'POST':
         form = SociosForm(request.POST,request.FILES)
         if form.is_valid():
-            form.save()
-            messages.success(request,'Socio creado con éxito.')
-            return redirect('socios')
+            admin_user = Usuarios.objects.filter(pk=request.session.get('auth_id')).first()
+            if not admin_user:
+                messages.error(request, 'No se pudo identificar al administrador que crea el socio.')
+                data['form'] = form
+            else:
+                socio = form.save(commit=False)
+                socio.id_usuario = admin_user
+                socio.save()
+                messages.success(request,'Socio creado con éxito.')
+                return redirect('socios')
         else:
             # Si hay errores, mantener los datos del formulario
             data['form'] = form

@@ -1,0 +1,58 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block contenido %}
+<div class="tabla-admin">
+    <div class="tabla-admin-header">
+        <h1 class="subtitulo-seccion">{{ titulo }}</h1>
+        <a href="{% url 'crearcuotas' %}" class="registro-button">Registrar cuota</a>
+    </div>
+
+    {% if messages %}
+        <div class="dashboard-messages" style="margin-bottom: 1.5rem;">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="tabla-admin-wrapper">
+        <table class="tabla-datos">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Pago asociado</th>
+                    <th>Monto</th>
+                    <th>Vencimiento</th>
+                    <th>Estado</th>
+                    <th style="width: 220px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cuota in cuotas %}
+                    <tr>
+                        <td>{{ cuota.id_cuota }}</td>
+                        <td>{% if cuota.id_pago %}Pago #{{ cuota.id_pago.id_pago }} – {{ cuota.id_pago.socio.nombre }}{% else %}—{% endif %}</td>
+                        <td>${{ cuota.monto }}</td>
+                        <td>{{ cuota.fecha_vencimiento|date:"d/m/Y" }}</td>
+                        <td>
+                            {% if cuota.pagado %}
+                                <span class="estado estado-pagado">Pagado</span>
+                            {% else %}
+                                <span class="estado estado-pendiente">Pendiente</span>
+                            {% endif %}
+                        </td>
+                        <td style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <a href="{% url 'editarcuotas' cuota.id_cuota %}" class="card-link">Editar</a>
+                            <a href="{% url 'eliminarcuotas' cuota.id_cuota %}" class="card-link" onclick="return confirm('¿Seguro que deseas eliminar esta cuota?');">Eliminar</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="mensaje-vacio">No hay cuotas registradas.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

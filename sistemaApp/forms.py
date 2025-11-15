@@ -50,10 +50,9 @@ class SociosForm(forms.ModelForm):
 
     class Meta:
         model = Socios
-        fields = '__all__'
+        exclude = ['id_usuario']
         widgets = {
             'id_socio':forms.TextInput(attrs={'class':'form-control','placeholder':'Ingresa ID socio'}),
-            'id_usuario':forms.Select(attrs={'class':'form-select','placeholder':'Selecciona usuario'}),
             'nombre':forms.TextInput(attrs={'class':'form-control','placeholder':'Ingresa nombre'}),
             'email':forms.EmailInput(attrs={'class':'form-control','placeholder':'Ingresa email'}),
             'telefono':forms.TextInput(attrs={'class':'form-control','placeholder':'Ingresa telefono'}),
@@ -112,10 +111,9 @@ class ProveedoresForm(forms.ModelForm):
 
     class Meta:
         model = Proveedores
-        fields = '__all__'
+        exclude = ['id_usuario']
         widgets = {
             'id_proveedor':forms.TextInput(attrs={'class':'form-control','placeholder':'Ingresa ID proveedor'}),
-            'id_usuario':forms.Select(attrs={'class':'form-select','placeholder':'Selecciona usuario'}),
             'nombre':forms.TextInput(attrs={'class':'form-control','placeholder':'Ingresa nombre'}),
             'email':forms.EmailInput(attrs={'class':'form-control','placeholder':'Ingresa email'}),
             'fecha_descuento':forms.DateInput(attrs={'class':'form-control','type':'date'}),

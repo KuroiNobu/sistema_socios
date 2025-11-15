@@ -26,6 +26,9 @@ from sistemaApp.views import (
     socio_pagos,
     socio_cuotas,
     socio_credencial,
+    proveedor_descuentos,
+    proveedor_pagos,
+    proveedor_cuotas,
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -41,5 +44,8 @@ urlpatterns = [
     path('mis-pagos/', socio_pagos, name='socio_pagos'),
     path('mis-cuotas/', socio_cuotas, name='socio_cuotas'),
     path('mi-credencial/', socio_credencial, name='socio_credencial'),
+    path('proveedor/descuentos/', proveedor_descuentos, name='proveedor_descuentos'),
+    path('proveedor/pagos/', proveedor_pagos, name='proveedor_pagos'),
+    path('proveedor/cuotas/', proveedor_cuotas, name='proveedor_cuotas'),
     path('sistemas/',include('sistemaApp.urls'))
 ] + static (settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)

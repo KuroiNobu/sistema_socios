@@ -1,0 +1,52 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block contenido %}
+<div class="tabla-admin">
+    <div class="tabla-admin-header">
+        <h1 class="subtitulo-seccion">{{ titulo }}</h1>
+        <a href="{% url 'crearsocios' %}" class="registro-button">Registrar socio</a>
+    </div>
+
+    {% if messages %}
+        <div class="dashboard-messages" style="margin-bottom: 1.5rem;">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="tabla-admin-wrapper">
+        <table class="tabla-datos">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Fecha registro</th>
+                    <th style="width: 200px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for socio in socios %}
+                    <tr>
+                        <td>{{ socio.id_socio }}</td>
+                        <td>{{ socio.nombre }}{% if socio.apellido %} {{ socio.apellido }}{% endif %}</td>
+                        <td><a href="mailto:{{ socio.email }}" class="card-link">{{ socio.email }}</a></td>
+                        <td>{% if socio.telefono %}{{ socio.telefono }}{% else %}—{% endif %}</td>
+                        <td>{{ socio.fecha_registro|date:"d/m/Y" }}</td>
+                        <td style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <a href="{% url 'editarsocios' socio.id_socio %}" class="card-link">Editar</a>
+                            <a href="{% url 'eliminarsocios' socio.id_socio %}" class="card-link" onclick="return confirm('¿Seguro que deseas eliminar este socio?');">Eliminar</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="mensaje-vacio">No hay socios registrados.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

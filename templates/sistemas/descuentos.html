@@ -1,0 +1,58 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block contenido %}
+<div class="tabla-admin">
+    <div class="tabla-admin-header">
+        <h1 class="subtitulo-seccion">{{ titulo }}</h1>
+        <a href="{% url 'creardescuentos' %}" class="registro-button">Registrar descuento</a>
+    </div>
+
+    {% if messages %}
+        <div class="dashboard-messages" style="margin-bottom: 1.5rem;">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="tabla-admin-wrapper">
+        <table class="tabla-datos">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Proveedor</th>
+                    <th>Código</th>
+                    <th>Descripción</th>
+                    <th>Foto</th>
+                    <th style="width: 200px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for descuento in descuentos %}
+                    <tr>
+                        <td>{{ descuento.id_descuento }}</td>
+                        <td>{{ descuento.proveedor.nombre }}</td>
+                        <td>{{ descuento.codigo_qr }}</td>
+                        <td>{{ descuento.descripcion|truncatechars:60 }}</td>
+                        <td>
+                            {% if descuento.foto %}
+                                <a href="{{ descuento.foto.url }}" class="card-link" target="_blank">Ver imagen</a>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <a href="{% url 'editardescuentos' descuento.id_descuento %}" class="card-link">Editar</a>
+                            <a href="{% url 'eliminardescuentos' descuento.id_descuento %}" class="card-link" onclick="return confirm('¿Seguro que deseas eliminar este descuento?');">Eliminar</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="mensaje-vacio">No hay descuentos registrados.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

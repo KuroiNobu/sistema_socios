@@ -1,0 +1,50 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block contenido %}
+<div class="tabla-admin">
+    <div class="tabla-admin-header">
+        <h1 class="subtitulo-seccion">{{ titulo }}</h1>
+        <a href="{% url 'crearpagos' %}" class="registro-button">Registrar pago</a>
+    </div>
+
+    {% if messages %}
+        <div class="dashboard-messages" style="margin-bottom: 1.5rem;">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="tabla-admin-wrapper">
+        <table class="tabla-datos">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Socio</th>
+                    <th>Monto</th>
+                    <th>Fecha de pago</th>
+                    <th style="width: 200px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pago in pagos %}
+                    <tr>
+                        <td>{{ pago.id_pago }}</td>
+                        <td>{{ pago.socio.nombre }}</td>
+                        <td>${{ pago.monto }}</td>
+                        <td>{{ pago.fecha_pago|date:"d/m/Y" }}</td>
+                        <td style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <a href="{% url 'editarpagos' pago.id_pago %}" class="card-link">Editar</a>
+                            <a href="{% url 'eliminarpagos' pago.id_pago %}" class="card-link" onclick="return confirm('¿Seguro que deseas eliminar este pago?');">Eliminar</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="mensaje-vacio">No hay pagos registrados.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

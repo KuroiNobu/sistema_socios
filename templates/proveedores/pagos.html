@@ -1,0 +1,45 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block contenido %}
+<div class="tabla-admin">
+    <div class="tabla-admin-header">
+        <h1 class="subtitulo-seccion">{{ titulo }}</h1>
+        <p style="color:#666; margin:0;">Información general para {{ proveedor.nombre }}</p>
+    </div>
+
+    {% if messages %}
+        <div class="dashboard-messages" style="margin-bottom: 1.5rem;">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="tabla-admin-wrapper">
+        <table class="tabla-datos">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Socio</th>
+                    <th>Monto</th>
+                    <th>Fecha de pago</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pago in pagos %}
+                    <tr>
+                        <td>{{ pago.id_pago }}</td>
+                        <td>{{ pago.socio.nombre }}</td>
+                        <td>${{ pago.monto }}</td>
+                        <td>{{ pago.fecha_pago|date:"d/m/Y" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="mensaje-vacio">No existen pagos registrados.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

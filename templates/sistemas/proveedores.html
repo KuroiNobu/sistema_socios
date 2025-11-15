@@ -1,0 +1,52 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block contenido %}
+<div class="tabla-admin">
+    <div class="tabla-admin-header">
+        <h1 class="subtitulo-seccion">{{ titulo }}</h1>
+        <a href="{% url 'crearproveedores' %}" class="registro-button">Registrar proveedor</a>
+    </div>
+
+    {% if messages %}
+        <div class="dashboard-messages" style="margin-bottom: 1.5rem;">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="tabla-admin-wrapper">
+        <table class="tabla-datos">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Tipo de descuento</th>
+                    <th>Fecha de descuento</th>
+                    <th style="width: 200px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for proveedor in proveedores %}
+                    <tr>
+                        <td>{{ proveedor.id_proveedor }}</td>
+                        <td>{{ proveedor.nombre }}{% if proveedor.apellido %} {{ proveedor.apellido }}{% endif %}</td>
+                        <td>{% if proveedor.email %}<a href="mailto:{{ proveedor.email }}" class="card-link">{{ proveedor.email }}</a>{% else %}—{% endif %}</td>
+                        <td>{{ proveedor.tipo_descuento|default:"—" }}</td>
+                        <td>{% if proveedor.fecha_descuento %}{{ proveedor.fecha_descuento|date:"d/m/Y" }}{% else %}—{% endif %}</td>
+                        <td style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <a href="{% url 'editarproveedores' proveedor.id_proveedor %}" class="card-link">Editar</a>
+                            <a href="{% url 'eliminarproveedores' proveedor.id_proveedor %}" class="card-link" onclick="return confirm('¿Seguro que deseas eliminar este proveedor?');">Eliminar</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="mensaje-vacio">No hay proveedores registrados.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

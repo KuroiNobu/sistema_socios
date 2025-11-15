@@ -1,0 +1,58 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block contenido %}
+<div class="tabla-admin">
+    <div class="tabla-admin-header">
+        <h1 class="subtitulo-seccion">{{ titulo }}</h1>
+        <a href="{% url 'crearcredenciales' %}" class="registro-button">Registrar credencial</a>
+    </div>
+
+    {% if messages %}
+        <div class="dashboard-messages" style="margin-bottom: 1.5rem;">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="tabla-admin-wrapper">
+        <table class="tabla-datos">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Socio</th>
+                    <th>Código</th>
+                    <th>QR</th>
+                    <th>Datos</th>
+                    <th style="width: 200px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cred in cred_list %}
+                    <tr>
+                        <td>{{ cred.obj.id_credencial }}</td>
+                        <td>{{ cred.obj.id_socio.nombre }}</td>
+                        <td>{{ cred.obj.codigo_qr }}</td>
+                        <td>
+                            {% if cred.qr_img %}
+                                <img src="{{ cred.qr_img }}" alt="QR {{ cred.obj.codigo_qr }}" style="width:90px;height:90px;object-fit:contain;">
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td><code style="font-size:0.75rem; word-break:break-all;">{{ cred.payload_json }}</code></td>
+                        <td style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <a href="{% url 'editarcredenciales' cred.obj.id_credencial %}" class="card-link">Editar</a>
+                            <a href="{% url 'eliminarcredenciales' cred.obj.id_credencial %}" class="card-link" onclick="return confirm('¿Seguro que deseas eliminar esta credencial?');">Eliminar</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="mensaje-vacio">No hay credenciales registradas.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

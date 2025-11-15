@@ -1,0 +1,53 @@
+{% extends 'index.html' %}
+{% load static %}
+{% block contenido %}
+<div class="tabla-admin">
+    <div class="tabla-admin-header">
+        <h1 class="subtitulo-seccion">{{ titulo }}</h1>
+        <p style="color:#666; margin:0;">Información general para {{ proveedor.nombre }}</p>
+    </div>
+
+    {% if messages %}
+        <div class="dashboard-messages" style="margin-bottom: 1.5rem;">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="tabla-admin-wrapper">
+        <table class="tabla-datos">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Pago asociado</th>
+                    <th>Monto</th>
+                    <th>Vencimiento</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cuota in cuotas %}
+                    <tr>
+                        <td>{{ cuota.id_cuota }}</td>
+                        <td>{% if cuota.id_pago %}Pago #{{ cuota.id_pago.id_pago }} – {{ cuota.id_pago.socio.nombre }}{% else %}—{% endif %}</td>
+                        <td>${{ cuota.monto }}</td>
+                        <td>{{ cuota.fecha_vencimiento|date:"d/m/Y" }}</td>
+                        <td>
+                            {% if cuota.pagado %}
+                                <span class="estado estado-pagado">Pagada</span>
+                            {% else %}
+                                <span class="estado estado-pendiente">Pendiente</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="mensaje-vacio">No hay cuotas registradas.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
