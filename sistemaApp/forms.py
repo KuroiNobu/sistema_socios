@@ -202,3 +202,39 @@ class SolicitudIngresoForm(forms.ModelForm):
             'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa tu teléfono (opcional)'}),
             'comentarios': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Cuéntanos por qué quieres unirte', 'rows': 3}),
         }
+
+
+class FiltroSociosForm(forms.Form):
+    nombre = forms.CharField(
+        label='Nombre',
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre o apellido'}),
+    )
+    email = forms.CharField(
+        label='Correo',
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Correo de socio'}),
+    )
+    telefono = forms.CharField(
+        label='Teléfono',
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Teléfono'}),
+    )
+    fecha_inicio = forms.DateField(
+        label='Registrado desde',
+        required=False,
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+    )
+    fecha_fin = forms.DateField(
+        label='Registrado hasta',
+        required=False,
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        inicio = cleaned_data.get('fecha_inicio')
+        fin = cleaned_data.get('fecha_fin')
+        if inicio and fin and inicio > fin:
+            raise forms.ValidationError('La fecha de inicio no puede ser posterior a la fecha de término.')
+        return cleaned_data

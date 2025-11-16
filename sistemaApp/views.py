@@ -3,6 +3,7 @@ from functools import wraps
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.core.files.storage import FileSystemStorage
+from django.db.models import Q
 
 from sistemaApp.models import Proveedores, Descuentos, Usuarios, Credenciales, Socios, Pagos, Cuotas, SolicitudIngreso
 from sistemaApp.forms import (
@@ -16,7 +17,24 @@ from sistemaApp.forms import (
     LoginForm,
     SocioPerfilForm,
     SolicitudIngresoForm,
+    FiltroSociosForm,
 )
+
+
+def inicio(request):
+    form = SolicitudIngresoForm(request.POST or None)
+
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Tu solicitud fue enviada. Te contactaremos pronto.')
+            return redirect('inicio')
+        messages.error(request, 'Revisa la información ingresada e inténtalo nuevamente.')
+
+    context = {
+        'form_solicitud': form,
+    }
+    return render(request, 'index.html', context)
 
 
 def login_required(view_func):
@@ -279,7 +297,6 @@ def area_personal(request):
 
     if user_type == 'admin':
         return redirect('panel')
-
     if user_type == 'socio':
         acciones = SOCIO_ACTIONS
     elif user_type == 'proveedor':
@@ -318,27 +335,11 @@ def obtener_socio_y_usuario(request):
 def obtener_proveedor(request):
     if request.session.get('auth_scope') != 'proveedor':
         return None
-    proveedor_id = request.session.get('proveedor_id')
-    if not proveedor_id:
+    auth_id = request.session.get('auth_id')
+    if not auth_id:
         return None
-    return Proveedores.objects.filter(pk=proveedor_id).first()
 
-
-def inicio(request):
-    form = SolicitudIngresoForm(request.POST or None)
-
-    if request.method == 'POST':
-        if form.is_valid():
-            form.save()
-            messages.success(request, '¡Gracias! Recibimos tu solicitud y nos pondremos en contacto pronto.')
-            return redirect('inicio')
-        else:
-            messages.error(request, 'Revisa la información ingresada e inténtalo nuevamente.')
-
-    context = {
-        'form_solicitud': form,
-    }
-    return render(request, 'index.html', context)
+    return Proveedores.objects.filter(id_proveedor=auth_id).first()
 
 
 @login_required
@@ -374,11 +375,16 @@ def perfil_socio(request):
 
 @login_required
 def socio_pagos(request):
-    socio, _ = obtener_socio_y_usuario(request)
+    user_type = request.session.get('user_type')
 
+    if user_type != 'socio':
+        messages.info(request, 'Esta sección es exclusiva para socios registrados.')
+        return redirect('area_personal')
+
+    socio, _ = obtener_socio_y_usuario(request)
     if not socio:
-        messages.info(request, 'Necesitas completar tu perfil de socio para ver tus pagos.')
-        return redirect('perfil_socio')
+        messages.info(request, 'Aún no tienes un perfil de socio asignado. Contacta a administración.')
+        return redirect('area_personal')
 
     pagos = Pagos.objects.filter(socio=socio).order_by('-fecha_pago')
     context = {
@@ -391,20 +397,30 @@ def socio_pagos(request):
 
 @login_required
 def socio_cuotas(request):
+    user_type = request.session.get('user_type')
+
+    if user_type != 'socio':
+        messages.info(request, 'Esta sección es exclusiva para socios registrados.')
+        return redirect('area_personal')
+
     socio, _ = obtener_socio_y_usuario(request)
-
     if not socio:
-        messages.info(request, 'Necesitas completar tu perfil de socio para ver tus cuotas.')
-        return redirect('perfil_socio')
+        messages.info(request, 'Aún no tienes un perfil de socio asignado. Contacta a administración.')
+        return redirect('area_personal')
 
-    cuotas = Cuotas.objects.filter(id_pago__socio=socio).select_related('id_pago').order_by('-fecha_vencimiento')
+    cuotas = (
+        Cuotas.objects
+        .filter(id_pago__socio=socio)
+        .select_related('id_pago')
+        .order_by('-fecha_vencimiento')
+    )
+
     context = {
         'titulo': 'Mis cuotas',
         'socio': socio,
         'cuotas': cuotas,
     }
     return render(request, 'socios/cuotas.html', context)
-
 
 @login_required
 def socio_credencial(request):
@@ -508,22 +524,27 @@ def proveedor_cuotas(request):
 
 @admin_required
 def proveedores(request):
-    proveedores = Proveedores.objects.all()
-    data =  {'titulo': 'Lista de Proveedores', 'proveedores': proveedores}
+    proveedores = Proveedores.objects.all().order_by('nombre')
+    data = {
+        'titulo': 'Lista de Proveedores',
+        'proveedores': proveedores,
+    }
     return render(request, 'sistemas/proveedores.html', data)
+
 
 @admin_required
 def crearProveedores(request):
     form = ProveedoresForm()
     data = {
-        'titulo':'Crear Proveedor',
-        'form':form, 
-        'ruta':'/sistemas/proveedores/'
+        'titulo': 'Crear Proveedor',
+        'form': form,
+        'ruta': '/sistemas/proveedores/',
     }
     if request.method == 'POST':
-        form = ProveedoresForm(request.POST,request.FILES)
+        form = ProveedoresForm(request.POST, request.FILES)
         if form.is_valid():
-            admin_user = Usuarios.objects.filter(pk=request.session.get('auth_id')).first()
+            admin_id = request.session.get('auth_id')
+            admin_user = Usuarios.objects.filter(pk=admin_id, tipo='admin').first()
             if not admin_user:
                 messages.error(request, 'No se pudo identificar al administrador que crea el proveedor.')
                 data['form'] = form
@@ -532,11 +553,11 @@ def crearProveedores(request):
                 proveedor = form.save(commit=False)
                 proveedor.id_usuario = admin_user
                 proveedor.save()
-                messages.success(request,'Proveedor creado con éxito.')
+                messages.success(request, 'Proveedor creado con éxito.')
                 return redirect('proveedores')
         else:
             data['form'] = form
-    return render(request,'sistemas/createF.html',data)
+    return render(request, 'sistemas/createF.html', data)
 
 @admin_required
 def editarProveedor(request,id):
@@ -563,8 +584,11 @@ def eliminarProveedor(request,id):
 
 @admin_required
 def descuentos(request):
-    descuentos = Descuentos.objects.all()
-    data =  {'titulo': 'Lista de Descuentos', 'descuentos': descuentos}
+    descuentos = Descuentos.objects.select_related('proveedor').all().order_by('-id_descuento')
+    data = {
+        'titulo': 'Lista de Descuentos',
+        'descuentos': descuentos,
+    }
     return render(request, 'sistemas/descuentos.html', data)
 
 @admin_required
@@ -609,7 +633,7 @@ def eliminarDescuentos(request,id):
 @admin_required
 def usuarios(request):
     usuarios = Usuarios.objects.all().order_by('id_usuario')
-    data =  {
+    data = {
         'titulo': 'Lista de Usuarios',
         'usuarios': usuarios,
     }
@@ -696,8 +720,37 @@ def eliminarCredenciales(request,id):
 
 @admin_required
 def socios(request):
-    socios = Socios.objects.all()
-    data =  {'titulo': 'Lista de Socios', 'socios': socios}
+    form = FiltroSociosForm(request.GET or None)
+    socios = Socios.objects.all().order_by('nombre')
+
+    if form.is_valid():
+        nombre = form.cleaned_data.get('nombre')
+        if nombre:
+            socios = socios.filter(
+                Q(nombre__icontains=nombre) | Q(apellido__icontains=nombre)
+            )
+
+        email = form.cleaned_data.get('email')
+        if email:
+            socios = socios.filter(email__icontains=email)
+
+        telefono = form.cleaned_data.get('telefono')
+        if telefono:
+            socios = socios.filter(telefono__icontains=telefono)
+
+        inicio = form.cleaned_data.get('fecha_inicio')
+        if inicio:
+            socios = socios.filter(fecha_registro__gte=inicio)
+
+        fin = form.cleaned_data.get('fecha_fin')
+        if fin:
+            socios = socios.filter(fecha_registro__lte=fin)
+
+    data = {
+        'titulo': 'Lista de Socios',
+        'socios': socios,
+        'filtro_form': form,
+    }
     return render(request, 'sistemas/socios.html', data)
 
 @admin_required
@@ -769,8 +822,11 @@ def eliminarSocios(request,id):
 
 @admin_required
 def pagos(request):
-    pagos = Pagos.objects.all()
-    data =  {'titulo': 'Lista de Pagos', 'pagos': pagos}
+    pagos = Pagos.objects.select_related('socio').all().order_by('-fecha_pago')
+    data = {
+        'titulo': 'Lista de Pagos',
+        'pagos': pagos,
+    }
     return render(request, 'sistemas/pagos.html', data)
 
 @admin_required
@@ -815,8 +871,11 @@ def eliminarPagos(request,id):
 
 @admin_required
 def cuotas(request):
-    cuotas = Cuotas.objects.all()
-    data =  {'titulo': 'Lista de Cuotas', 'cuotas': cuotas}
+    cuotas = Cuotas.objects.select_related('id_pago__socio').all().order_by('-fecha_vencimiento')
+    data = {
+        'titulo': 'Lista de Cuotas',
+        'cuotas': cuotas,
+    }
     return render(request, 'sistemas/cuotas.html', data)
 
 @admin_required
@@ -875,7 +934,8 @@ def credenciales(request):
     Muestra la lista de Credenciales y genera (en memoria) un QR por cada registro.
     No utiliza POST para generar QR: cada usuario tiene su QR mostrado en la lista.
     """
-    qs = Credenciales.objects.all()
+    qs = Credenciales.objects.select_related('id_socio').all().order_by('-id_credencial')
+
     cred_list = []
 
     for c in qs:
@@ -906,7 +966,7 @@ def credenciales(request):
 
     context = {
         "titulo": "Lista de Credenciales",
-        "cred_list": cred_list
+        "cred_list": cred_list,
     }
     return render(request, "sistemas/credenciales.html", context)
 

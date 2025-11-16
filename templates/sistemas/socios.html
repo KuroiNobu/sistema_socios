@@ -15,6 +15,35 @@
         </div>
     {% endif %}
 
+    <form method="get" class="filter-card" style="margin-bottom: 1.5rem;">
+        <div class="filter-grid">
+            <div class="filter-field">
+                <label for="id_nombre">Nombre o apellido</label>
+                {{ filtro_form.nombre }}
+            </div>
+            <div class="filter-field">
+                <label for="id_email">Correo</label>
+                {{ filtro_form.email }}
+            </div>
+            <div class="filter-field">
+                <label for="id_telefono">Teléfono</label>
+                {{ filtro_form.telefono }}
+            </div>
+            <div class="filter-field">
+                <label for="id_fecha_inicio">Registrado desde</label>
+                {{ filtro_form.fecha_inicio }}
+            </div>
+            <div class="filter-field">
+                <label for="id_fecha_fin">Registrado hasta</label>
+                {{ filtro_form.fecha_fin }}
+            </div>
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="registro-button">Aplicar filtros</button>
+            <a href="{% url 'socios' %}" class="filter-reset">Limpiar</a>
+        </div>
+    </form>
+
     <div class="tabla-admin-wrapper">
         <table class="tabla-datos">
             <thead>
