@@ -1,0 +1,83 @@
+{% extends 'index.html' %}
+{% load static %}
+
+
+{% block contenido %}
+<section id="solicitudes" class="solicitud-section">
+    <div class="solicitud-texto">
+        <h2>Solicita unirte como socio o proveedor</h2>
+        <p>Completa el formulario y nuestro equipo de administración revisará tu solicitud. Te contactaremos para continuar con el proceso.</p>
+        <ul>
+            <li>Recibe beneficios exclusivos y participa en actividades colaborativas.</li>
+            <li>Comparte tu propuesta de valor como proveedor dentro de la comunidad.</li>
+            <li>Mantente al tanto de las oportunidades y novedades del ecosistema.</li>
+        </ul>
+    </div>
+
+    <div class="solicitud-formulario">
+        {% if messages %}
+            <div class="dashboard-messages" style="margin-bottom: 1rem;">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" class="solicitud-card">
+            {% csrf_token %}
+            <div class="solicitud-radios-wrapper">
+                {{ form_solicitud.tipo.label_tag }}
+                {{ form_solicitud.tipo }}
+                {% if form_solicitud.tipo.errors %}
+                    <span class="solicitud-error">{{ form_solicitud.tipo.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <div class="solicitud-grid">
+                <div class="form-group">
+                    <label for="{{ form_solicitud.nombre.id_for_label }}">{{ form_solicitud.nombre.label }}</label>
+                    {{ form_solicitud.nombre }}
+                    {% if form_solicitud.nombre.errors %}
+                        <span class="solicitud-error">{{ form_solicitud.nombre.errors.0 }}</span>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form_solicitud.apellido.id_for_label }}">{{ form_solicitud.apellido.label }}</label>
+                    {{ form_solicitud.apellido }}
+                    {% if form_solicitud.apellido.errors %}
+                        <span class="solicitud-error">{{ form_solicitud.apellido.errors.0 }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="solicitud-grid">
+                <div class="form-group">
+                    <label for="{{ form_solicitud.email.id_for_label }}">{{ form_solicitud.email.label }}</label>
+                    {{ form_solicitud.email }}
+                    {% if form_solicitud.email.errors %}
+                        <span class="solicitud-error">{{ form_solicitud.email.errors.0 }}</span>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form_solicitud.telefono.id_for_label }}">{{ form_solicitud.telefono.label }}</label>
+                    {{ form_solicitud.telefono }}
+                    {% if form_solicitud.telefono.errors %}
+                        <span class="solicitud-error">{{ form_solicitud.telefono.errors.0 }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form_solicitud.comentarios.id_for_label }}">{{ form_solicitud.comentarios.label }}</label>
+                {{ form_solicitud.comentarios }}
+                {% if form_solicitud.comentarios.errors %}
+                    <span class="solicitud-error">{{ form_solicitud.comentarios.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="registro-button">Enviar solicitud</button>
+        </form>
+    </div>
+</section>
+{% endblock contenido %}
+    

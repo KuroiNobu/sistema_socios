@@ -4,7 +4,11 @@
 <div class="tabla-admin">
     <div class="tabla-admin-header">
         <h1 class="subtitulo-seccion">{{ titulo }}</h1>
-        <a href="{% url 'crearproveedores' %}" class="registro-button">Registrar proveedor</a>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="{% url 'crearproveedores' %}" class="registro-button">Registrar proveedor</a>
+            <a href="{% url 'exportar_proveedores_excel' %}" class="registro-button">Exportar a Excel</a>
+            <a href="{% url 'exportar_proveedores_pdf' %}" class="registro-button">Exportar a PDF</a>
+        </div>
     </div>
 
     {% if messages %}

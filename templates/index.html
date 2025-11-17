@@ -54,7 +54,7 @@
                     <a href="{% url 'logout' %}" class="boton-cerrar-sesion">Cerrar sesión</a>
                 {% else %}
                     <a href="{% url 'login' %}" class="boton-iniciar-sesion">Iniciar sesión</a>
-                    <a href="#solicitudes" class="boton-registrarse">Solicitar ingreso</a>
+                    <a href="{% url 'solicitud_ingreso' %}" class="boton-registrarse">Solicitar ingreso</a>
                 {% endif %}
                 <a href="#" class="boton-carrito">
                     <i class="fas fa-shopping-cart"></i>

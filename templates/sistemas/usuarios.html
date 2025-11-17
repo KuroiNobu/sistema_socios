@@ -4,7 +4,11 @@
 <div class="tabla-admin">
     <div class="tabla-admin-header">
         <h1 class="subtitulo-seccion">{{ titulo }}</h1>
-        <a href="{% url 'crearusuarios' %}" class="registro-button">Registrar usuario</a>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="{% url 'crearusuarios' %}" class="registro-button">Registrar usuario</a>
+            <a href="{% url 'exportar_usuarios_excel' %}" class="registro-button">Exportar a Excel</a>
+            <a href="{% url 'exportar_usuarios_pdf' %}" class="registro-button">Exportar a PDF</a>
+        </div>
     </div>
 
     {% if messages %}

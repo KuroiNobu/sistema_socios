@@ -1,42 +1,47 @@
 from django.urls import path
-from sistemaApp.views import proveedores, crearProveedores, editarProveedor, eliminarProveedor, descuentos, crearDescuentos, editarDescuentos, eliminarDescuentos, pagos, crearPagos, editarPagos, eliminarPagos
-from sistemaApp.views import usuarios, crearUsuarios, editarUsuarios, eliminarUsuarios, solicitudes_ingreso, credenciales, crearCredenciales, editarCredenciales, eliminarCredenciales, socios, crearSocios, editarSocios, eliminarSocios, cuotas, crearCuotas, editarCuotas, eliminarCuotas
+from sistemaApp import views
 
 urlpatterns = [
     # Rutas para la gestión de proveedores
-    path('proveedores/', proveedores, name='proveedores'),
-    path('cproveedores/', crearProveedores, name='crearproveedores'),
-    path('editarproveedores/<int:id>/', editarProveedor, name='editarproveedores'),
-    path('eliminarproveedores/<int:id>/', eliminarProveedor, name='eliminarproveedores'),
+    path('proveedores/', views.proveedores, name='proveedores'),
+    path('proveedores/exportar/excel/', views.exportar_proveedores_excel, name='exportar_proveedores_excel'),
+    path('proveedores/exportar/pdf/', views.exportar_proveedores_pdf, name='exportar_proveedores_pdf'),
+    path('cproveedores/', views.crearProveedores, name='crearproveedores'),
+    path('editarproveedores/<int:id>/', views.editarProveedor, name='editarproveedores'),
+    path('eliminarproveedores/<int:id>/', views.eliminarProveedor, name='eliminarproveedores'),
     # Rutas para la gestión de descuentos
-    path('descuentos/', descuentos, name='descuentos'),
-    path('cdescuentos/', crearDescuentos, name='creardescuentos'),
-    path('editardescuentos/<int:id>/', editarDescuentos, name='editardescuentos'),
-    path('eliminardescuentos/<int:id>/', eliminarDescuentos, name='eliminardescuentos'),
+    path('descuentos/', views.descuentos, name='descuentos'),
+    path('cdescuentos/', views.crearDescuentos, name='creardescuentos'),
+    path('editardescuentos/<int:id>/', views.editarDescuentos, name='editardescuentos'),
+    path('eliminardescuentos/<int:id>/', views.eliminarDescuentos, name='eliminardescuentos'),
     # Rutas para la gestión de usuarios
-    path('usuarios/', usuarios, name='usuarios'),
-    path('cusuarios/', crearUsuarios, name='crearusuarios'),
-    path('editarusuarios/<int:id>/', editarUsuarios, name='editarusuarios'),
-    path('eliminarusuarios/<int:id>/', eliminarUsuarios, name='eliminarusuarios'),
-    path('solicitudes/', solicitudes_ingreso, name='solicitudes_ingreso'),
+    path('usuarios/', views.usuarios, name='usuarios'),
+    path('usuarios/exportar/excel/', views.exportar_usuarios_excel, name='exportar_usuarios_excel'),
+    path('usuarios/exportar/pdf/', views.exportar_usuarios_pdf, name='exportar_usuarios_pdf'),
+    path('cusuarios/', views.crearUsuarios, name='crearusuarios'),
+    path('editarusuarios/<int:id>/', views.editarUsuarios, name='editarusuarios'),
+    path('eliminarusuarios/<int:id>/', views.eliminarUsuarios, name='eliminarusuarios'),
+    path('solicitudes/', views.solicitudes_ingreso, name='solicitudes_ingreso'),
     # Rutas para la gestión de credenciales
-    path('credenciales/', credenciales, name='credenciales'),
-    path('ccredenciales/', crearCredenciales, name='crearcredenciales'),
-    path('editarcredenciales/<int:id>/', editarCredenciales, name='editarcredenciales'),
-    path('eliminarcredenciales/<int:id>/', eliminarCredenciales, name='eliminarcredenciales'),
+    path('credenciales/', views.credenciales, name='credenciales'),
+    path('ccredenciales/', views.crearCredenciales, name='crearcredenciales'),
+    path('editarcredenciales/<int:id>/', views.editarCredenciales, name='editarcredenciales'),
+    path('eliminarcredenciales/<int:id>/', views.eliminarCredenciales, name='eliminarcredenciales'),
     # Rutas para la gestión de socios
-    path('socios/', socios, name='socios'),
-    path('csocios/', crearSocios, name='crearsocios'),
-    path('editarsocios/<int:id>/', editarSocios, name='editarsocios'),
-    path('eliminarsocios/<int:id>/', eliminarSocios, name='eliminarsocios'),
+    path('socios/', views.socios, name='socios'),
+    path('socios/exportar/excel/', views.exportar_socios_excel, name='exportar_socios_excel'),
+    path('socios/exportar/pdf/', views.exportar_socios_pdf, name='exportar_socios_pdf'),
+    path('csocios/', views.crearSocios, name='crearsocios'),
+    path('editarsocios/<int:id>/', views.editarSocios, name='editarsocios'),
+    path('eliminarsocios/<int:id>/', views.eliminarSocios, name='eliminarsocios'),
     # Rutas para la gestión de pagos
-    path('pagos/', pagos, name='pagos'),
-    path('cpagos/', crearPagos, name='crearpagos'),
-    path('editarpagos/<int:id>/', editarPagos, name='editarpagos'),
-    path('eliminarpagos/<int:id>/', eliminarPagos, name='eliminarpagos'),
+    path('pagos/', views.pagos, name='pagos'),
+    path('cpagos/', views.crearPagos, name='crearpagos'),
+    path('editarpagos/<int:id>/', views.editarPagos, name='editarpagos'),
+    path('eliminarpagos/<int:id>/', views.eliminarPagos, name='eliminarpagos'),
     # Rutas para la gestión de cuotas
-    path('cuotas/', cuotas, name='cuotas'),
-    path('ccuotas/', crearCuotas, name='crearcuotas'),
-    path('editarcuotas/<int:id>/', editarCuotas, name='editarcuotas'),
-    path('eliminarcuotas/<int:id>/', eliminarCuotas, name='eliminarcuotas'),
+    path('cuotas/', views.cuotas, name='cuotas'),
+    path('ccuotas/', views.crearCuotas, name='crearcuotas'),
+    path('editarcuotas/<int:id>/', views.editarCuotas, name='editarcuotas'),
+    path('eliminarcuotas/<int:id>/', views.eliminarCuotas, name='eliminarcuotas'),
 ]

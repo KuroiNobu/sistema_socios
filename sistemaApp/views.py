@@ -1,9 +1,21 @@
+import base64
+from datetime import date, datetime
+import io
+import json
+from decimal import Decimal
 from functools import wraps
 
-from django.shortcuts import render, redirect
+import qrcode
+import xlwt
 from django.contrib import messages
 from django.core.files.storage import FileSystemStorage
 from django.db.models import Q
+from django.http import HttpResponse
+from django.shortcuts import render, redirect
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import landscape, letter
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from sistemaApp.models import Proveedores, Descuentos, Usuarios, Credenciales, Socios, Pagos, Cuotas, SolicitudIngreso
 from sistemaApp.forms import (
@@ -20,6 +32,101 @@ from sistemaApp.forms import (
     FiltroSociosForm,
 )
 
+EXPORT_DATE_FORMAT = '%d/%m/%Y'
+
+
+def _format_cell(value):
+    if value is None:
+        return ''
+    if isinstance(value, (datetime, date)):
+        return value.strftime(EXPORT_DATE_FORMAT)
+    if isinstance(value, Decimal):
+        return float(value)
+    return value
+
+
+def _build_excel_response(filename, headers, rows):
+    workbook = xlwt.Workbook(encoding='utf-8')
+    sheet = workbook.add_sheet('Datos')
+
+    header_style = xlwt.easyxf('font: bold on; align: horiz center; pattern: pattern solid, fore_colour gray25;')
+    normal_style = xlwt.easyxf('align: horiz left;')
+
+    for col_index, header in enumerate(headers):
+        sheet.write(0, col_index, header, header_style)
+        sheet.col(col_index).width = 4000
+
+    for row_index, row in enumerate(rows, start=1):
+        for col_index, cell in enumerate(row):
+            sheet.write(row_index, col_index, _format_cell(cell), normal_style)
+
+    output = io.BytesIO()
+    workbook.save(output)
+    output.seek(0)
+
+    response = HttpResponse(output.getvalue(), content_type='application/vnd.ms-excel')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+def _build_pdf_response(filename, title, headers, rows):
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(letter), rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=18)
+    styles = getSampleStyleSheet()
+
+    elements = [Paragraph(title, styles['Heading2']), Spacer(1, 12)]
+
+    table_data = [headers] + [[str(_format_cell(cell)) for cell in row] for row in rows]
+    table = Table(table_data, hAlign='LEFT', repeatRows=1)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f0f0f0')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#333333')),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('GRID', (0, 0), (-1, -1), 0.25, colors.HexColor('#cccccc')),
+    ]))
+
+    elements.append(table)
+    doc.build(elements)
+    buffer.seek(0)
+
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+def _filtrar_socios_queryset(request):
+    form = FiltroSociosForm(request.GET or None)
+    socios_qs = Socios.objects.all().order_by('nombre')
+
+    if form.is_valid():
+        nombre = form.cleaned_data.get('nombre')
+        if nombre:
+            socios_qs = socios_qs.filter(
+                Q(nombre__icontains=nombre) | Q(apellido__icontains=nombre)
+            )
+
+        email = form.cleaned_data.get('email')
+        if email:
+            socios_qs = socios_qs.filter(email__icontains=email)
+
+        telefono = form.cleaned_data.get('telefono')
+        if telefono:
+            socios_qs = socios_qs.filter(telefono__icontains=telefono)
+
+        inicio = form.cleaned_data.get('fecha_inicio')
+        if inicio:
+            socios_qs = socios_qs.filter(fecha_registro__gte=inicio)
+
+        fin = form.cleaned_data.get('fecha_fin')
+        if fin:
+            socios_qs = socios_qs.filter(fecha_registro__lte=fin)
+
+    return socios_qs, form
+
 
 def inicio(request):
     form = SolicitudIngresoForm(request.POST or None)
@@ -35,6 +142,22 @@ def inicio(request):
         'form_solicitud': form,
     }
     return render(request, 'index.html', context)
+
+
+def solicitud_ingreso_publico(request):
+    form = SolicitudIngresoForm(request.POST or None)
+
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Tu solicitud fue enviada. Te contactaremos pronto.')
+            return redirect('solicitud_ingreso')
+        messages.error(request, 'Revisa la información ingresada e inténtalo nuevamente.')
+
+    context = {
+        'form_solicitud': form,
+    }
+    return render(request, 'solicitud.html', context)
 
 
 def login_required(view_func):
@@ -422,6 +545,90 @@ def socio_cuotas(request):
     }
     return render(request, 'socios/cuotas.html', context)
 
+
+@login_required
+def exportar_mis_pagos_excel(request):
+    if request.session.get('user_type') != 'socio':
+        messages.info(request, 'Esta sección es exclusiva para socios registrados.')
+        return redirect('area_personal')
+
+    socio, _ = obtener_socio_y_usuario(request)
+    if not socio:
+        messages.info(request, 'Aún no tienes un perfil de socio asignado. Contacta a administración.')
+        return redirect('area_personal')
+
+    pagos = Pagos.objects.filter(socio=socio).order_by('-fecha_pago')
+    headers = ['ID', 'Monto', 'Fecha de pago']
+    rows = [[p.id_pago, p.monto, p.fecha_pago] for p in pagos]
+    return _build_excel_response('mis_pagos.xls', headers, rows)
+
+
+@login_required
+def exportar_mis_pagos_pdf(request):
+    if request.session.get('user_type') != 'socio':
+        messages.info(request, 'Esta sección es exclusiva para socios registrados.')
+        return redirect('area_personal')
+
+    socio, _ = obtener_socio_y_usuario(request)
+    if not socio:
+        messages.info(request, 'Aún no tienes un perfil de socio asignado. Contacta a administración.')
+        return redirect('area_personal')
+
+    pagos = Pagos.objects.filter(socio=socio).order_by('-fecha_pago')
+    headers = ['ID', 'Monto', 'Fecha de pago']
+    rows = [[p.id_pago, p.monto, p.fecha_pago] for p in pagos]
+    return _build_pdf_response('mis_pagos.pdf', 'Mis pagos', headers, rows)
+
+
+@login_required
+def exportar_mis_cuotas_excel(request):
+    if request.session.get('user_type') != 'socio':
+        messages.info(request, 'Esta sección es exclusiva para socios registrados.')
+        return redirect('area_personal')
+
+    socio, _ = obtener_socio_y_usuario(request)
+    if not socio:
+        messages.info(request, 'Aún no tienes un perfil de socio asignado. Contacta a administración.')
+        return redirect('area_personal')
+
+    cuotas = (
+        Cuotas.objects
+        .filter(id_pago__socio=socio)
+        .select_related('id_pago')
+        .order_by('-fecha_vencimiento')
+    )
+    headers = ['ID', 'Monto', 'Fecha de vencimiento', 'Estado']
+    rows = [
+        [c.id_cuota, c.monto, c.fecha_vencimiento, 'Pagada' if c.pagado else 'Pendiente']
+        for c in cuotas
+    ]
+    return _build_excel_response('mis_cuotas.xls', headers, rows)
+
+
+@login_required
+def exportar_mis_cuotas_pdf(request):
+    if request.session.get('user_type') != 'socio':
+        messages.info(request, 'Esta sección es exclusiva para socios registrados.')
+        return redirect('area_personal')
+
+    socio, _ = obtener_socio_y_usuario(request)
+    if not socio:
+        messages.info(request, 'Aún no tienes un perfil de socio asignado. Contacta a administración.')
+        return redirect('area_personal')
+
+    cuotas = (
+        Cuotas.objects
+        .filter(id_pago__socio=socio)
+        .select_related('id_pago')
+        .order_by('-fecha_vencimiento')
+    )
+    headers = ['ID', 'Monto', 'Fecha de vencimiento', 'Estado']
+    rows = [
+        [c.id_cuota, c.monto, c.fecha_vencimiento, 'Pagada' if c.pagado else 'Pendiente']
+        for c in cuotas
+    ]
+    return _build_pdf_response('mis_cuotas.pdf', 'Mis cuotas', headers, rows)
+
 @login_required
 def socio_credencial(request):
     socio, _ = obtener_socio_y_usuario(request)
@@ -533,6 +740,40 @@ def proveedores(request):
 
 
 @admin_required
+def exportar_proveedores_excel(request):
+    proveedores_qs = Proveedores.objects.all().order_by('nombre')
+    headers = ['ID', 'Nombre completo', 'Email', 'Tipo de descuento', 'Fecha de descuento']
+    rows = [
+        [
+            prov.id_proveedor,
+            f"{prov.nombre} {prov.apellido or ''}".strip(),
+            prov.email or '',
+            prov.tipo_descuento or '',
+            prov.fecha_descuento,
+        ]
+        for prov in proveedores_qs
+    ]
+    return _build_excel_response('proveedores.xls', headers, rows)
+
+
+@admin_required
+def exportar_proveedores_pdf(request):
+    proveedores_qs = Proveedores.objects.all().order_by('nombre')
+    headers = ['ID', 'Nombre completo', 'Email', 'Tipo de descuento', 'Fecha de descuento']
+    rows = [
+        [
+            prov.id_proveedor,
+            f"{prov.nombre} {prov.apellido or ''}".strip(),
+            prov.email or '',
+            prov.tipo_descuento or '',
+            prov.fecha_descuento,
+        ]
+        for prov in proveedores_qs
+    ]
+    return _build_pdf_response('proveedores.pdf', 'Lista de Proveedores', headers, rows)
+
+
+@admin_required
 def crearProveedores(request):
     form = ProveedoresForm()
     data = {
@@ -639,6 +880,22 @@ def usuarios(request):
     }
     return render(request, 'sistemas/usuarios.html', data)
 
+
+@admin_required
+def exportar_usuarios_excel(request):
+    usuarios_qs = Usuarios.objects.all().order_by('id_usuario')
+    headers = ['ID', 'RUN', 'Nombre', 'Email']
+    rows = [[u.id_usuario, u.run, u.nombre, u.email] for u in usuarios_qs]
+    return _build_excel_response('usuarios.xls', headers, rows)
+
+
+@admin_required
+def exportar_usuarios_pdf(request):
+    usuarios_qs = Usuarios.objects.all().order_by('id_usuario')
+    headers = ['ID', 'RUN', 'Nombre', 'Email']
+    rows = [[u.id_usuario, u.run, u.nombre, u.email] for u in usuarios_qs]
+    return _build_pdf_response('usuarios.pdf', 'Lista de Usuarios', headers, rows)
+
 @admin_required
 def crearUsuarios(request):
     form = UsuariosForm()
@@ -720,38 +977,48 @@ def eliminarCredenciales(request,id):
 
 @admin_required
 def socios(request):
-    form = FiltroSociosForm(request.GET or None)
-    socios = Socios.objects.all().order_by('nombre')
-
-    if form.is_valid():
-        nombre = form.cleaned_data.get('nombre')
-        if nombre:
-            socios = socios.filter(
-                Q(nombre__icontains=nombre) | Q(apellido__icontains=nombre)
-            )
-
-        email = form.cleaned_data.get('email')
-        if email:
-            socios = socios.filter(email__icontains=email)
-
-        telefono = form.cleaned_data.get('telefono')
-        if telefono:
-            socios = socios.filter(telefono__icontains=telefono)
-
-        inicio = form.cleaned_data.get('fecha_inicio')
-        if inicio:
-            socios = socios.filter(fecha_registro__gte=inicio)
-
-        fin = form.cleaned_data.get('fecha_fin')
-        if fin:
-            socios = socios.filter(fecha_registro__lte=fin)
+    socios_qs, form = _filtrar_socios_queryset(request)
 
     data = {
         'titulo': 'Lista de Socios',
-        'socios': socios,
+        'socios': socios_qs,
         'filtro_form': form,
     }
     return render(request, 'sistemas/socios.html', data)
+
+
+@admin_required
+def exportar_socios_excel(request):
+    socios_qs, _ = _filtrar_socios_queryset(request)
+    headers = ['ID', 'Nombre completo', 'Email', 'Teléfono', 'Fecha de registro']
+    rows = [
+        [
+            socio.id_socio,
+            f"{socio.nombre} {socio.apellido or ''}".strip(),
+            socio.email,
+            socio.telefono or '',
+            socio.fecha_registro,
+        ]
+        for socio in socios_qs
+    ]
+    return _build_excel_response('socios.xls', headers, rows)
+
+
+@admin_required
+def exportar_socios_pdf(request):
+    socios_qs, _ = _filtrar_socios_queryset(request)
+    headers = ['ID', 'Nombre completo', 'Email', 'Teléfono', 'Fecha de registro']
+    rows = [
+        [
+            socio.id_socio,
+            f"{socio.nombre} {socio.apellido or ''}".strip(),
+            socio.email,
+            socio.telefono or '',
+            socio.fecha_registro,
+        ]
+        for socio in socios_qs
+    ]
+    return _build_pdf_response('socios.pdf', 'Lista de Socios', headers, rows)
 
 @admin_required
 def solicitudes_ingreso(request):
@@ -917,14 +1184,6 @@ def eliminarCuotas(request,id):
     cuota = Cuotas.objects.get(pk=id)
     cuota.delete()
     return redirect('/sistemas/cuotas')
-
-
-
-import qrcode
-import io
-import base64
-import json
-from datetime import datetime
 
 
 

@@ -4,7 +4,11 @@
 <div class="tabla-admin">
     <div class="tabla-admin-header">
         <h1 class="subtitulo-seccion">{{ titulo }}</h1>
-        <a href="{% url 'crearsocios' %}" class="registro-button">Registrar socio</a>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="{% url 'crearsocios' %}" class="registro-button">Registrar socio</a>
+            <a href="{% url 'exportar_socios_excel' %}" class="registro-button">Exportar a Excel</a>
+            <a href="{% url 'exportar_socios_pdf' %}" class="registro-button">Exportar a PDF</a>
+        </div>
     </div>
 
     {% if messages %}
@@ -41,6 +45,8 @@
         <div class="filter-actions">
             <button type="submit" class="registro-button">Aplicar filtros</button>
             <a href="{% url 'socios' %}" class="filter-reset">Limpiar</a>
+            <button type="submit" class="registro-button" formaction="{% url 'exportar_socios_excel' %}">Exportar a Excel</button>
+            <button type="submit" class="registro-button" formaction="{% url 'exportar_socios_pdf' %}">Exportar a PDF</button>
         </div>
     </form>
 

@@ -5,6 +5,11 @@
     <h2 class="subtitulo-seccion">{{ titulo }}</h2>
     <p class="descripcion-seccion">Revisa los pagos asociados a tu cuenta de socio.</p>
 
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+        <a href="{% url 'exportar_mis_pagos_excel' %}" class="registro-button">Exportar a Excel</a>
+        <a href="{% url 'exportar_mis_pagos_pdf' %}" class="registro-button">Exportar a PDF</a>
+    </div>
+
     {% if pagos %}
         <table class="tabla-datos">
             <thead>
