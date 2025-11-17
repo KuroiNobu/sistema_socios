@@ -30,6 +30,7 @@ from sistemaApp.forms import (
     SocioPerfilForm,
     SolicitudIngresoForm,
     FiltroSociosForm,
+    FiltroProveedoresForm,
 )
 
 EXPORT_DATE_FORMAT = '%d/%m/%Y'
@@ -731,10 +732,28 @@ def proveedor_cuotas(request):
 
 @admin_required
 def proveedores(request):
+    form = FiltroProveedoresForm(request.GET or None)
     proveedores = Proveedores.objects.all().order_by('nombre')
+
+    if form.is_valid():
+        nombre = form.cleaned_data.get('nombre')
+        if nombre:
+            proveedores = proveedores.filter(
+                Q(nombre__icontains=nombre) | Q(apellido__icontains=nombre)
+            )
+
+        email = form.cleaned_data.get('email')
+        if email:
+            proveedores = proveedores.filter(email__icontains=email)
+
+        tipo = form.cleaned_data.get('tipo_descuento')
+        if tipo:
+            proveedores = proveedores.filter(tipo_descuento__icontains=tipo)
+
     data = {
         'titulo': 'Lista de Proveedores',
         'proveedores': proveedores,
+        'filtro_form': form,
     }
     return render(request, 'sistemas/proveedores.html', data)
 

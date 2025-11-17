@@ -238,3 +238,21 @@ class FiltroSociosForm(forms.Form):
         if inicio and fin and inicio > fin:
             raise forms.ValidationError('La fecha de inicio no puede ser posterior a la fecha de término.')
         return cleaned_data
+
+
+class FiltroProveedoresForm(forms.Form):
+    nombre = forms.CharField(
+        label='Nombre',
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre o apellido'}),
+    )
+    email = forms.CharField(
+        label='Correo',
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Correo de contacto'}),
+    )
+    tipo_descuento = forms.CharField(
+        label='Tipo de descuento',
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tipo de descuento'}),
+    )
