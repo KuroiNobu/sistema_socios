@@ -18,6 +18,10 @@
     {% endif %}
 
     <form method="get" class="filter-card" style="margin-bottom: 1.5rem;">
+        <div class="filter-card-head">
+            <h3>Filtrar proveedores</h3>
+            <a href="{% url 'proveedores' %}" class="filter-reset">Limpiar filtros</a>
+        </div>
         <div class="filter-grid">
             <div class="filter-field">
                 <label for="id_nombre">Nombre o apellido</label>
@@ -32,9 +36,18 @@
                 {{ filtro_form.tipo_descuento }}
             </div>
         </div>
+        <div class="filter-grid">
+            <div class="filter-field">
+                <label for="id_fecha_inicio">Desde</label>
+                {{ filtro_form.fecha_inicio }}
+            </div>
+            <div class="filter-field">
+                <label for="id_fecha_fin">Hasta</label>
+                {{ filtro_form.fecha_fin }}
+            </div>
+        </div>
         <div class="filter-actions">
             <button type="submit" class="registro-button">Aplicar filtros</button>
-            <a href="{% url 'proveedores' %}" class="filter-reset">Limpiar</a>
             <button type="submit" class="registro-button" formaction="{% url 'exportar_proveedores_excel' %}">Exportar a Excel</button>
             <button type="submit" class="registro-button" formaction="{% url 'exportar_proveedores_pdf' %}">Exportar a PDF</button>
         </div>

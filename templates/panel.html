@@ -2,76 +2,148 @@
 {% load static %}
 
 {% block contenido %}
-<div class="dashboard-wrapper">
-    <header class="dashboard-header">
-        <div class="dashboard-title">
-            <h1>Personas que conectan</h1>
-        </div>
-        <div class="dashboard-user">
-            <span class="role-badge">
+<div class="panel-shell">
+    <aside class="panel-sidebar">
+        <div class="panel-profile">
+            <div class="panel-avatar">
                 <i class="fas {% if user_type == 'admin' %}fa-user-shield{% elif user_type == 'socio' %}fa-user-group{% elif user_type == 'proveedor' %}fa-store{% else %}fa-user{% endif %}"></i>
-                {% if user_type == 'admin' %}
-                    Administrador
-                {% elif user_type == 'socio' %}
-                    Socio
-                {% elif user_type == 'proveedor' %}
-                    Proveedor
-                {% else %}
-                    Usuario
-                {% endif %}
-            </span>
-            <a href="{% url 'logout' %}" class="dashboard-logout">Cerrar sesión</a>
+            </div>
+            <div>
+                <p class="panel-profile-label">Sesión activa</p>
+                <h2 class="panel-profile-role">
+                    {% if user_type == 'admin' %}
+                        Administrador
+                    {% elif user_type == 'socio' %}
+                        Socio
+                    {% elif user_type == 'proveedor' %}
+                        Proveedor
+                    {% else %}
+                        Usuario
+                    {% endif %}
+                </h2>
+            </div>
         </div>
-    </header>
 
-    <div class="dashboard-body">
-        <aside class="dashboard-sidebar">
-            <ul class="sidebar-menu">
+        <nav class="panel-menu">
+            <p class="panel-menu-label">Navegación</p>
+            <ul class="panel-menu-list">
                 {% for accion in acciones %}
                     <li>
                         {% if accion.secondary_url %}
-                            <a href="{% url accion.secondary_url %}">{{ accion.title }}</a>
+                            <a href="{% url accion.secondary_url %}" class="panel-menu-link">
+                                <i class="{{ accion.icon|default:'fas fa-circle' }}"></i>
+                                <span>{{ accion.title }}</span>
+                                <i class="fas fa-arrow-right panel-menu-link-icon"></i>
+                            </a>
                         {% elif accion.primary_url %}
-                            <a href="{% url accion.primary_url %}">{{ accion.title }}</a>
+                            <a href="{% url accion.primary_url %}" class="panel-menu-link">
+                                <i class="{{ accion.icon|default:'fas fa-circle' }}"></i>
+                                <span>{{ accion.title }}</span>
+                                <i class="fas fa-arrow-right panel-menu-link-icon"></i>
+                            </a>
                         {% else %}
-                            <span>{{ accion.title }}</span>
+                            <span class="panel-menu-link panel-menu-link--disabled">
+                                <i class="{{ accion.icon|default:'fas fa-circle' }}"></i>
+                                <span>{{ accion.title }}</span>
+                            </span>
                         {% endif %}
                     </li>
                 {% endfor %}
             </ul>
-        </aside>
+        </nav>
 
-        <section class="dashboard-content">
-            {% if messages %}
-                <div class="dashboard-messages">
-                    {% for message in messages %}
-                        <p>{{ message }}</p>
+        <a href="{% url 'logout' %}" class="panel-btn panel-btn-ghost panel-logout">Cerrar sesión</a>
+    </aside>
+
+    <main class="panel-main">
+        {% if dashboard %}
+            <section class="panel-dashboard">
+                <div class="panel-dashboard-meta">
+                    <div>
+                        <p class="panel-pill panel-pill-muted">Última conexión</p>
+                        <h2>{{ dashboard.last_login }}</h2>
+                    </div>
+                    <div class="panel-dashboard-user">
+                        <div>
+                            <span class="panel-dashboard-label">Usuario</span>
+                            <strong>{{ dashboard.user_name|default:'-' }}</strong>
+                        </div>
+                        <div>
+                            <span class="panel-dashboard-label">Correo</span>
+                            <strong>{{ dashboard.user_email|default:'-' }}</strong>
+                        </div>
+                        <div>
+                            <span class="panel-dashboard-label">Rol</span>
+                            <strong class="panel-dashboard-role">{{ dashboard.role|default:'Usuario'|title }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-dashboard-grid">
+                    {% for stat in dashboard.stats %}
+                        <article class="panel-stat-card">
+                            <span class="panel-stat-icon"><i class="{{ stat.icon|default:'fas fa-circle' }}"></i></span>
+                            <div>
+                                <p class="panel-stat-label">{{ stat.label }}</p>
+                                <h3 class="panel-stat-value">{{ stat.value }}</h3>
+                                <p class="panel-stat-hint">{{ stat.hint }}</p>
+                            </div>
+                        </article>
+                    {% empty %}
+                        <p class="dashboard-empty">No encontramos métricas para mostrar todavía.</p>
                     {% endfor %}
                 </div>
-            {% endif %}
 
-            <div class="dashboard-cards">
-                {% for accion in acciones %}
-                    <div class="dashboard-card">
-                        <div class="card-icon">
-                            <i class="{{ accion.icon }}"></i>
-                        </div>
-                        <div class="card-info">
+                {% if dashboard.highlights %}
+                    <div class="panel-dashboard-highlights">
+                        {% for highlight in dashboard.highlights %}
+                            <article class="panel-highlight-card">
+                                <div class="panel-highlight-icon">
+                                    <i class="{{ highlight.icon|default:'fas fa-circle' }}"></i>
+                                </div>
+                                <div>
+                                    <p class="panel-highlight-label">{{ highlight.title }}</p>
+                                    <h4 class="panel-highlight-value">{{ highlight.value }}</h4>
+                                    <p class="panel-highlight-detail">{{ highlight.detail }}</p>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </section>
+        {% endif %}
+
+        {% if messages %}
+            <div class="panel-messages">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="panel-cards">
+            {% for accion in acciones %}
+                <div class="panel-card">
+                    <div class="panel-card-head">
+                        <span class="panel-card-icon">
+                            <i class="{{ accion.icon|default:'fas fa-circle' }}"></i>
+                        </span>
+                        <div>
                             <h3>{{ accion.title }}</h3>
                             <p>{{ accion.description }}</p>
                         </div>
-                        <div class="card-actions">
-                            {% if accion.primary_url %}
-                                <a href="{% url accion.primary_url %}" class="registro-button">{{ accion.primary_label }}</a>
-                            {% endif %}
-                            {% if accion.secondary_url %}
-                                <a href="{% url accion.secondary_url %}" class="card-link">{{ accion.secondary_label }}</a>
-                            {% endif %}
-                        </div>
                     </div>
-                {% endfor %}
-            </div>
-        </section>
-    </div>
+                    <div class="panel-card-actions">
+                        {% if accion.primary_url %}
+                            <a href="{% url accion.primary_url %}" class="panel-btn panel-btn-primary">{{ accion.primary_label }}</a>
+                        {% endif %}
+                        {% if accion.secondary_url %}
+                            <a href="{% url accion.secondary_url %}" class="panel-btn panel-btn-ghost">{{ accion.secondary_label }}</a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </main>
 </div>
 {% endblock contenido %}

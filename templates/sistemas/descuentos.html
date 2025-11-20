@@ -15,6 +15,60 @@
         </div>
     {% endif %}
 
+    <section class="discount-builder">
+        <div class="discount-builder-card">
+            <div>
+                <h2>Generador profesional de descuentos QR</h2>
+                <p class="discount-builder-subtitle">Crea un beneficio, genera su QR y compártelo con la comunidad.</p>
+                <form method="post" class="builder-form">
+                    {% csrf_token %}
+                    <div class="builder-grid">
+                        <div class="form-group{% if builder_form.proveedor.errors %} has-error{% endif %}">
+                            {{ builder_form.proveedor.label_tag }}
+                            {{ builder_form.proveedor }}
+                            {% for error in builder_form.proveedor.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+                        </div>
+                        <div class="form-group{% if builder_form.codigo.errors %} has-error{% endif %}">
+                            {{ builder_form.codigo.label_tag }}
+                            {{ builder_form.codigo }}
+                            {% for error in builder_form.codigo.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+                        </div>
+                        <div class="form-group{% if builder_form.porcentaje.errors %} has-error{% endif %}">
+                            {{ builder_form.porcentaje.label_tag }}
+                            {{ builder_form.porcentaje }}
+                            {% if builder_form.porcentaje.help_text %}<small>{{ builder_form.porcentaje.help_text }}</small>{% endif %}
+                            {% for error in builder_form.porcentaje.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+                        </div>
+                        <div class="form-group{% if builder_form.vigencia.errors %} has-error{% endif %}">
+                            {{ builder_form.vigencia.label_tag }}
+                            {{ builder_form.vigencia }}
+                            {% if builder_form.vigencia.help_text %}<small>{{ builder_form.vigencia.help_text }}</small>{% endif %}
+                            {% for error in builder_form.vigencia.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+                        </div>
+                    </div>
+                    <div class="form-group{% if builder_form.descripcion.errors %} has-error{% endif %}">
+                        {{ builder_form.descripcion.label_tag }}
+                        {{ builder_form.descripcion }}
+                        {% for error in builder_form.descripcion.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+                    </div>
+                    <button type="submit" class="registro-button">Generar descuento</button>
+                </form>
+            </div>
+            <div class="builder-preview">
+                {% if qr_preview %}
+                    <p class="builder-preview-label">QR listo para compartir</p>
+                    <img src="{{ qr_preview.data_uri }}" alt="QR del descuento" class="builder-preview-img" />
+                    <pre class="builder-preview-json">{{ qr_preview.payload_json }}</pre>
+                    {% if ultimo_descuento %}
+                        <p class="builder-preview-meta">ID generado: {{ ultimo_descuento.id_descuento }} · Código: {{ ultimo_descuento.codigo_qr }}</p>
+                    {% endif %}
+                {% else %}
+                    <p class="builder-preview-placeholder">Completa el formulario para ver el QR y la carga útil que se enviará a los socios.</p>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
     <div class="tabla-admin-wrapper">
         <table class="tabla-datos">
             <thead>

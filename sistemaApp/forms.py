@@ -1,4 +1,5 @@
 from django import forms
+from django.utils import timezone
 from django.utils.html import format_html
 from sistemaApp.models import Usuarios, Credenciales, Socios, Pagos, Cuotas, Descuentos, Proveedores, SolicitudIngreso
 
@@ -101,6 +102,55 @@ class DescuentosForm(forms.ModelForm):
             'descripcion':forms.Textarea(attrs={'class':'form-control','placeholder':'Ingresa descripcion','rows':3}),
             'foto': verLogo(attrs={'class': 'form-control', 'placeholder': 'Selecciona foto'}),
         }
+
+
+class DescuentoBuilderForm(forms.Form):
+    proveedor = forms.ModelChoiceField(
+        label='Proveedor',
+        queryset=Proveedores.objects.none(),
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+    codigo = forms.CharField(
+        label='Código QR',
+        max_length=100,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: ECO2025'}),
+    )
+    descripcion = forms.CharField(
+        label='Descripción del beneficio',
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Detalle del descuento ofrecido'}),
+    )
+    porcentaje = forms.DecimalField(
+        label='Porcentaje o monto',
+        min_value=0,
+        max_value=100,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 15'}),
+        help_text='Usa la cifra que verán los socios dentro del QR.',
+    )
+    vigencia = forms.DateField(
+        label='Vigencia',
+        required=False,
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        help_text='Opcional. Fecha hasta la que aplica el beneficio.',
+    )
+
+    def clean_codigo(self):
+        codigo = (self.cleaned_data.get('codigo') or '').strip()
+        if not codigo:
+            raise forms.ValidationError('Ingresa un código para identificar el QR.')
+        if Descuentos.objects.filter(codigo_qr=codigo).exists():
+            raise forms.ValidationError('Ya existe un descuento con este código.')
+        return codigo
+
+    def clean_vigencia(self):
+        vigencia = self.cleaned_data.get('vigencia')
+        if vigencia and vigencia < timezone.localdate():
+            raise forms.ValidationError('La vigencia no puede estar en el pasado.')
+        return vigencia
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['proveedor'].queryset = Proveedores.objects.all().order_by('nombre')
 
 class ProveedoresForm(forms.ModelForm):
     passwd = forms.CharField(

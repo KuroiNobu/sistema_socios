@@ -1,17 +1,16 @@
-import base64
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import io
 import json
 from decimal import Decimal
 from functools import wraps
 
-import qrcode
 import xlwt
 from django.contrib import messages
 from django.core.files.storage import FileSystemStorage
 from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
+from django.utils import timezone
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib.styles import getSampleStyleSheet
@@ -31,6 +30,13 @@ from sistemaApp.forms import (
     SolicitudIngresoForm,
     FiltroSociosForm,
     FiltroProveedoresForm,
+    DescuentoBuilderForm,
+)
+from sistemaApp.services.qr_service import (
+    QRConfig,
+    generate_credential_qr,
+    generate_custom_qr,
+    generate_discount_qr,
 )
 
 EXPORT_DATE_FORMAT = '%d/%m/%Y'
@@ -360,6 +366,7 @@ def login_view(request):
                 request.session['user_name'] = usuario.nombre
                 request.session['user_email'] = usuario.email
                 request.session['user_type'] = 'admin'
+                request.session['last_login'] = timezone.now().isoformat()
                 messages.success(request, f'Bienvenido {usuario.nombre}.')
                 return redirect('panel')
         else:
@@ -375,6 +382,7 @@ def login_view(request):
                     request.session['user_name'] = socio.nombre
                     request.session['user_email'] = socio.email
                     request.session['user_type'] = 'socio'
+                    request.session['last_login'] = timezone.now().isoformat()
                     messages.success(request, f'Bienvenido {socio.nombre}.')
                     return redirect('area_personal')
             else:
@@ -390,6 +398,7 @@ def login_view(request):
                         request.session['user_name'] = proveedor.nombre
                         request.session['user_email'] = proveedor.email
                         request.session['user_type'] = 'proveedor'
+                        request.session['last_login'] = timezone.now().isoformat()
                         messages.success(request, f'Bienvenido {proveedor.nombre}.')
                         return redirect('area_personal')
                 else:
@@ -406,11 +415,13 @@ def logout_view(request):
 
 @admin_required
 def panel(request):
+    dashboard = _build_dashboard_context(request, 'admin')
     context = {
         'acciones': ADMIN_ACTIONS,
         'titulo': 'Panel administrativo',
         'usuario': request.session.get('user_name', ''),
         'user_type': 'admin',
+        'dashboard': dashboard,
     }
     return render(request, 'panel.html', context)
 
@@ -428,11 +439,14 @@ def area_personal(request):
     else:
         acciones = []
 
+    dashboard = _build_dashboard_context(request, user_type)
+
     context = {
         'acciones': acciones,
         'titulo': 'Mi área personal',
         'usuario': request.session.get('user_name', ''),
         'user_type': user_type,
+        'dashboard': dashboard,
     }
     return render(request, 'panel.html', context)
 
@@ -464,6 +478,166 @@ def obtener_proveedor(request):
         return None
 
     return Proveedores.objects.filter(id_proveedor=auth_id).first()
+
+
+def _formatear_timestamp(valor):
+    if not valor:
+        return '—'
+    if isinstance(valor, datetime):
+        return timezone.localtime(valor).strftime('%d/%m/%Y %H:%M')
+    try:
+        parsed = datetime.fromisoformat(valor)
+        if timezone.is_naive(parsed):
+            parsed = timezone.make_aware(parsed, timezone.get_current_timezone())
+        return timezone.localtime(parsed).strftime('%d/%m/%Y %H:%M')
+    except (ValueError, TypeError):
+        return str(valor)
+
+
+def _build_dashboard_context(request, user_type):
+    last_login = request.session.get('last_login')
+    dashboard = {
+        'user_name': request.session.get('user_name', ''),
+        'user_email': request.session.get('user_email', ''),
+        'role': user_type,
+        'last_login': _formatear_timestamp(last_login),
+        'stats': [],
+        'highlights': [],
+    }
+
+    today = timezone.localdate()
+    month_start = today.replace(day=1)
+
+    if user_type == 'admin':
+        stats = [
+            {
+                'label': 'Socios activos',
+                'value': Socios.objects.count(),
+                'icon': 'fas fa-users',
+                'hint': 'Registros totales',
+            },
+            {
+                'label': 'Proveedores aliados',
+                'value': Proveedores.objects.count(),
+                'icon': 'fas fa-handshake',
+                'hint': 'Convenios vigentes',
+            },
+            {
+                'label': 'Solicitudes recientes',
+                'value': SolicitudIngreso.objects.filter(fecha_solicitud__gte=timezone.now() - timedelta(days=7)).count(),
+                'icon': 'fas fa-inbox',
+                'hint': 'Últimos 7 días',
+            },
+            {
+                'label': 'Pagos del mes',
+                'value': Pagos.objects.filter(fecha_pago__gte=month_start).count(),
+                'icon': 'fas fa-money-bill-wave',
+                'hint': 'Mes actual',
+            },
+        ]
+
+        ultimo_pago = Pagos.objects.order_by('-fecha_pago').first()
+        ultimo_socio = Socios.objects.order_by('-fecha_registro').first()
+
+        highlights = [
+            {
+                'title': 'Último pago registrado',
+                'value': ultimo_pago.fecha_pago.strftime('%d/%m/%Y') if ultimo_pago else 'Sin registros',
+                'icon': 'fas fa-receipt',
+                'detail': f'ID #{ultimo_pago.id_pago}' if ultimo_pago else 'Aún no se registran pagos',
+            },
+            {
+                'title': 'Último socio incorporado',
+                'value': f'{ultimo_socio.nombre} {ultimo_socio.apellido or ""}'.strip() if ultimo_socio else 'Sin registros',
+                'icon': 'fas fa-user-plus',
+                'detail': ultimo_socio.fecha_registro.strftime('%d/%m/%Y') if ultimo_socio else 'A la espera de nuevos socios',
+            },
+        ]
+
+        dashboard['stats'] = stats
+        dashboard['highlights'] = highlights
+        return dashboard
+
+    if user_type == 'socio':
+        socio, _ = obtener_socio_y_usuario(request)
+        if not socio:
+            return dashboard
+
+        cuotas_pendientes = Cuotas.objects.filter(id_pago__socio=socio, pagado=False).count()
+        pagos_registrados = Pagos.objects.filter(socio=socio).count()
+        ultimo_pago = Pagos.objects.filter(socio=socio).order_by('-fecha_pago').first()
+        proxima_cuota = (
+            Cuotas.objects
+            .filter(id_pago__socio=socio, pagado=False)
+            .order_by('fecha_vencimiento')
+            .first()
+        )
+
+        dashboard['stats'] = [
+            {
+                'label': 'Cuotas pendientes',
+                'value': cuotas_pendientes,
+                'icon': 'fas fa-calendar-xmark',
+                'hint': 'Pagos por regularizar',
+            },
+            {
+                'label': 'Pagos registrados',
+                'value': pagos_registrados,
+                'icon': 'fas fa-money-check',
+                'hint': 'Historial personal',
+            },
+        ]
+
+        dashboard['highlights'] = [
+            {
+                'title': 'Último pago',
+                'value': ultimo_pago.fecha_pago.strftime('%d/%m/%Y') if ultimo_pago else 'Sin pagos',
+                'icon': 'fas fa-clock-rotate-left',
+                'detail': f'ID #{ultimo_pago.id_pago}' if ultimo_pago else 'No registramos pagos aún',
+            },
+            {
+                'title': 'Próxima cuota',
+                'value': proxima_cuota.fecha_vencimiento.strftime('%d/%m/%Y') if proxima_cuota else 'Sin pendientes',
+                'icon': 'fas fa-bell',
+                'detail': f'Cuota #{proxima_cuota.id_cuota}' if proxima_cuota else 'Estás al día',
+            },
+        ]
+        return dashboard
+
+    if user_type == 'proveedor':
+        proveedor = obtener_proveedor(request)
+        if not proveedor:
+            return dashboard
+
+        descuentos_vigentes = Descuentos.objects.filter(proveedor=proveedor).count()
+        solicitudes_relacionadas = SolicitudIngreso.objects.filter(email__iexact=proveedor.email).count()
+
+        dashboard['stats'] = [
+            {
+                'label': 'Descuentos publicados',
+                'value': descuentos_vigentes,
+                'icon': 'fas fa-gift',
+                'hint': 'Visibles para socios',
+            },
+            {
+                'label': 'Solicitudes asociadas',
+                'value': solicitudes_relacionadas,
+                'icon': 'fas fa-envelope-open-text',
+                'hint': 'Coinciden con tu correo',
+            },
+        ]
+
+        dashboard['highlights'] = [
+            {
+                'title': 'Tipo de beneficio',
+                'value': proveedor.tipo_descuento or 'Sin definir',
+                'icon': 'fas fa-tags',
+                'detail': f'Última actualización {proveedor.fecha_descuento.strftime("%d/%m/%Y")}' if proveedor.fecha_descuento else 'Actualiza tus datos cuando lo necesites',
+            },
+        ]
+        return dashboard
+
+    return dashboard
 
 
 @login_required
@@ -639,34 +813,15 @@ def socio_credencial(request):
         return redirect('perfil_socio')
 
     credencial = Credenciales.objects.filter(id_socio=socio).first()
-    qr_img = None
-    payload_json = None
-
-    if credencial:
-        payload = {
-            "type": "credentials",
-            "id": credencial.pk,
-            "user": socio.nombre,
-            "note": getattr(credencial, "codigo_qr", ""),
-        }
-        payload_json = json.dumps(payload, ensure_ascii=False)
-
-        qr = qrcode.QRCode(box_size=8, border=3)
-        qr.add_data(payload_json)
-        qr.make(fit=True)
-        img = qr.make_image(fill_color="black", back_color="white")
-
-        buf = io.BytesIO()
-        img.save(buf, format="PNG")
-        b64 = base64.b64encode(buf.getvalue()).decode()
-        qr_img = f"data:image/png;base64,{b64}"
+    # Usamos el nuevo servicio centralizado para que todas las credenciales tengan el mismo formato QR.
+    qr_result = generate_credential_qr(credencial) if credencial else None
 
     context = {
         'titulo': 'Mi credencial',
         'socio': socio,
         'credencial': credencial,
-        'qr_img': qr_img,
-        'payload_json': payload_json,
+        'qr_img': qr_result.data_uri if qr_result else None,
+        'payload_json': qr_result.payload_json if qr_result else None,
     }
     return render(request, 'socios/credencial.html', context)
 
@@ -845,11 +1000,40 @@ def eliminarProveedor(request,id):
 @admin_required
 def descuentos(request):
     descuentos = Descuentos.objects.select_related('proveedor').all().order_by('-id_descuento')
-    data = {
+    builder_form = DescuentoBuilderForm(request.POST or None)
+    qr_preview = None
+    ultimo_descuento = None
+
+    if request.method == 'POST':
+        if builder_form.is_valid():
+            data = builder_form.cleaned_data
+            descuento = Descuentos.objects.create(
+                proveedor=data['proveedor'],
+                codigo_qr=data['codigo'],
+                descripcion=data['descripcion'],
+            )
+            base_qr = generate_discount_qr(descuento)
+            payload = {
+                **base_qr.payload,
+                'porcentaje': str(data['porcentaje']),
+                'vigencia': data['vigencia'].strftime('%Y-%m-%d') if data['vigencia'] else None,
+            }
+            qr_preview = generate_custom_qr(payload, QRConfig(box_size=8, border=3))
+            ultimo_descuento = descuento
+            builder_form = DescuentoBuilderForm()
+            descuentos = Descuentos.objects.select_related('proveedor').all().order_by('-id_descuento')
+            messages.success(request, 'Descuento creado y QR generado exitosamente.')
+        else:
+            messages.error(request, 'Revisa los datos del generador antes de continuar.')
+
+    context = {
         'titulo': 'Lista de Descuentos',
         'descuentos': descuentos,
+        'builder_form': builder_form,
+        'qr_preview': qr_preview,
+        'ultimo_descuento': ultimo_descuento,
     }
-    return render(request, 'sistemas/descuentos.html', data)
+    return render(request, 'sistemas/descuentos.html', context)
 
 @admin_required
 def crearDescuentos(request):
@@ -1216,30 +1400,12 @@ def credenciales(request):
 
     cred_list = []
 
-    for c in qs:
-
-        payload = {
-            "type": "credentials",
-            "id": c.pk,
-            "user": getattr(c, "usuario", ""),
-            "note": getattr(c, "descripcion", "")
-        }
-        payload_json = json.dumps(payload, ensure_ascii=False)
-
-        qr = qrcode.QRCode(box_size=6, border=2)
-        qr.add_data(payload_json)
-        qr.make(fit=True)
-        img = qr.make_image(fill_color="black", back_color="white")
-
-        buf = io.BytesIO()
-        img.save(buf, format="PNG")
-        b64 = base64.b64encode(buf.getvalue()).decode()
-        qr_img = f"data:image/png;base64,{b64}"
-
+    for credencial in qs:
+        qr_result = generate_credential_qr(credencial)
         cred_list.append({
-            "obj": c,
-            "qr_img": qr_img,
-            "payload_json": payload_json
+            "obj": credencial,
+            "qr_img": qr_result.data_uri,
+            "payload_json": qr_result.payload_json,
         })
 
     context = {
@@ -1255,62 +1421,40 @@ def descuentos_qr(request):
     Lista descuentos y genera (en memoria) un QR asociado a cada registro.
     También permite generar un QR ad-hoc vía POST con campos: code, percent, expires.
     """
-    qs = Descuentos.objects.all()
+    qs = Descuentos.objects.select_related('proveedor').all()
     desc_list = []
 
-    for d in qs:
-        payload = {
-            "type": "discount",
-            "id": d.pk,
-            "code": getattr(d, "codigo", ""),
-            "percent": getattr(d, "porcentaje", ""),
-            "expires": str(getattr(d, "vigencia", ""))  # ajustar según campo
-        }
-        payload_json = json.dumps(payload, ensure_ascii=False)
-
-        qr = qrcode.QRCode(box_size=6, border=2)
-        qr.add_data(payload_json)
-        qr.make(fit=True)
-        img = qr.make_image(fill_color="black", back_color="white")
-
-        buf = io.BytesIO()
-        img.save(buf, format="PNG")
-        b64 = base64.b64encode(buf.getvalue()).decode()
-        qr_img = f"data:image/png;base64,{b64}"
-
+    for descuento in qs:
+        # El generador profesional evita duplicar lógica y asegura un payload consistente.
+        qr_result = generate_discount_qr(descuento)
         desc_list.append({
-            "obj": d,
-            "qr_img": qr_img,
-            "payload_json": payload_json
+            "obj": descuento,
+            "qr_img": qr_result.data_uri,
+            "payload_json": qr_result.payload_json,
         })
 
     # soporte para generar QR ad-hoc desde formulario
     qr_img_custom = None
     payload_custom = None
+    payload_custom_json = None
     if request.method == "POST":
         code = request.POST.get("code", "").strip()
         percent = request.POST.get("percent", "").strip()
         expires = request.POST.get("expires", "").strip()
         payload_custom = {
             "type": "discount",
-            "code": code,
+            "codigo": code,
             "percent": percent,
-            "expires": expires
+            "expires": expires,
         }
-        payload_json = json.dumps(payload_custom, ensure_ascii=False)
-        qr = qrcode.QRCode(box_size=8, border=4)
-        qr.add_data(payload_json)
-        qr.make(fit=True)
-        img = qr.make_image(fill_color="black", back_color="white")
-        buf = io.BytesIO()
-        img.save(buf, format="PNG")
-        b64 = base64.b64encode(buf.getvalue()).decode()
-        qr_img_custom = f"data:image/png;base64,{b64}"
+        qr_result = generate_custom_qr(payload_custom, QRConfig(box_size=8, border=4))
+        qr_img_custom = qr_result.data_uri
+        payload_custom_json = qr_result.payload_json
 
     context = {
         "titulo": "Descuentos - QR",
         "desc_list": desc_list,
         "qr_img_custom": qr_img_custom,
-        "payload_custom": json.dumps(payload_custom, ensure_ascii=False) if payload_custom else None
+        "payload_custom": payload_custom_json or (json.dumps(payload_custom, ensure_ascii=False) if payload_custom else None)
     }
     return render(request, "sistemas/descuentos_qr.html", context)
